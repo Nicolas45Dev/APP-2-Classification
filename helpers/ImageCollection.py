@@ -47,6 +47,7 @@ class ImageCollection:
         self.all_images_loaded = False
         self.images = []
         self.histogrammes = []
+        self.meanRGB = np.zeros((len(self.image_list), 3))
 
         # Crée un array qui contient toutes les images
         # Dimensions [980, 256, 256, 3]
@@ -79,7 +80,7 @@ class ImageCollection:
                 pixel_values[j, i] = np.count_nonzero(image[:, :, j] == i)
         return pixel_values
 
-    def generateRGBHistograms(self, color_space=0):
+    def generateRGBHistograms(self):
         """
         Calcule les histogrammes RGB de toutes les images
         """
@@ -87,17 +88,13 @@ class ImageCollection:
         # Générer les moyennes de canal de couleur pour chaque image
         for i in range(len(self.image_list)):
             imageRGB = self.images[i]
-            if color_space == 0:
-                histvalues = self.generateHistogram(imageRGB)
-            elif color_space == 1:
-                imageLab = skic.rgb2lab(imageRGB)
-                imageLabhist = an.rescaleHistLab(imageLab, 256)
-                histvalues = self.generateHistogram(imageLabhist)
-            else:
-                imageHSV = skic.rgb2hsv(imageRGB)
-                imageHSVhist = np.round(imageHSV * (256 - 1))
-                histvalues = self.generateHistogram(imageHSVhist)
-            self.histogrammes.append(histvalues)
+            self.meanRGB[i] = (np.mean(imageRGB, axis=(0, 1)))
+        plt.figure()
+        plt.hist(self.meanRGB[:, 0], bins=256, color='red', alpha=0.5)
+        plt.hist(self.meanRGB[:, 1], bins=256, color='green', alpha=0.5)
+        plt.hist(self.meanRGB[:, 2], bins=256, color='blue', alpha=0.5)
+        plt.title(f'Histogramme des moyennes de canaux de couleur pour chaque image')
+        plt.show()
 
 
     def generateRepresentation(self):
@@ -133,7 +130,7 @@ class ImageCollection:
             indexes = [indexes]
 
         fig = plt.figure()
-        ax = fig.subplots(len(indexes), 2)
+        ax = fig.subplots(len(indexes), 3)
 
         for image_counter in range(len(indexes)):
             # charge une image si nécessaire
@@ -174,18 +171,18 @@ class ImageCollection:
             ax[image_counter, 0].set_title(f'histogramme RGB de {image_name}')
 
             # 2e histogramme
-            # ax[image_counter, 1].scatter(range(start, end), histtvaluesLab[0, start:end], s=3, c='red')
-            # ax[image_counter, 1].scatter(range(start, end), histtvaluesLab[1, start:end], s=3, c='green')
-            # ax[image_counter, 1].scatter(range(start, end), histtvaluesLab[2, start:end], s=3, c='blue')
-            # ax[image_counter, 1].set(xlabel='intensité', ylabel='comptes')
-            # ax[image_counter, 1].set_title(f'histogramme Lab de {image_name}')
+            ax[image_counter, 1].scatter(range(start, end), histtvaluesLab[0, start:end], s=3, c='red')
+            ax[image_counter, 1].scatter(range(start, end), histtvaluesLab[1, start:end], s=3, c='green')
+            ax[image_counter, 1].scatter(range(start, end), histtvaluesLab[2, start:end], s=3, c='blue')
+            ax[image_counter, 1].set(xlabel='intensité', ylabel='comptes')
+            ax[image_counter, 1].set_title(f'histogramme Lab de {image_name}')
 
             # 3e histogramme
-            ax[image_counter, 1].scatter(range(start, end), histvaluesHSV[0, start:end], s=3, c='red')
-            ax[image_counter, 1].scatter(range(start, end), histvaluesHSV[1, start:end], s=3, c='green')
-            ax[image_counter, 1].scatter(range(start, end), histvaluesHSV[2, start:end], s=3, c='blue')
+            ax[image_counter, 2].scatter(range(start, end), histvaluesHSV[0, start:end], s=3, c='red')
+            ax[image_counter, 2].scatter(range(start, end), histvaluesHSV[1, start:end], s=3, c='green')
+            ax[image_counter, 2].scatter(range(start, end), histvaluesHSV[2, start:end], s=3, c='blue')
             # plot the points
 
-            ax[image_counter, 1].set(xlabel='intensité', ylabel='comptes')
-            ax[image_counter, 1].set_title(f'histogramme HSV de {image_name}')
+            ax[image_counter, 2].set(xlabel='intensité', ylabel='comptes')
+            ax[image_counter, 2].set_title(f'histogramme HSV de {image_name}')
 

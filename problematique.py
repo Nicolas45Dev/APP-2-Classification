@@ -10,7 +10,7 @@ from helpers.ImageCollection import ImageCollection
 
 #######################################
 def problematique_APP2():
-    images = ImageCollection()
+    images = ImageCollection(True)
     # Génère une liste de N images, les visualise et affiche leur histo de couleur
     # TODO: voir L1.E4 et problématique
     if True:
@@ -18,12 +18,10 @@ def problematique_APP2():
         # Analyser quelques images pour développer des pistes pour le choix de la représentation
         N = 6
         im_list = images.get_samples(N)
-        print(im_list)
         images.images_display(im_list)
         images.view_histogrammes(im_list)
 
-    # La fonction ci-dessous explose
-    # images.generateRGBHistograms()
+    images.generateRGBHistograms()
 
     # images.generateRepresentation()
     plt.show()
