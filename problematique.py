@@ -21,7 +21,7 @@ def problematique_APP2():
         images.images_display(im_list)
         images.view_histogrammes(im_list)
 
-    images.generateRGBHistograms()
+    images.generateHSVHistograms()
 
     # images.generateRepresentation()
     plt.show()

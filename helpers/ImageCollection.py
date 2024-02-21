@@ -48,6 +48,8 @@ class ImageCollection:
         self.images = []
         self.histogrammes = []
         self.meanRGB = np.zeros((len(self.image_list), 3))
+        self.meanHSV = np.zeros((len(self.image_list), 3))
+        self.meanLab = np.zeros((len(self.image_list), 3))
 
         # Crée un array qui contient toutes les images
         # Dimensions [980, 256, 256, 3]
@@ -84,7 +86,6 @@ class ImageCollection:
         """
         Calcule les histogrammes RGB de toutes les images
         """
-        # TODO L1.E4.6 S'inspirer de view_histogrammes et déménager le code pertinent ici
         # Générer les moyennes de canal de couleur pour chaque image
         for i in range(len(self.image_list)):
             imageRGB = self.images[i]
@@ -93,6 +94,34 @@ class ImageCollection:
         plt.hist(self.meanRGB[:, 0], bins=256, color='red', alpha=0.5)
         plt.hist(self.meanRGB[:, 1], bins=256, color='green', alpha=0.5)
         plt.hist(self.meanRGB[:, 2], bins=256, color='blue', alpha=0.5)
+        plt.title(f'Histogramme des moyennes de canaux de couleur pour chaque image')
+        plt.show()
+
+    def generateHSVHistograms(self):
+        # Calculer la mayenne de canal de couleur pour chaque image
+        for i in range(len(self.image_list)):
+            imageRGB = self.images[i]
+            imageHSV = skic.rgb2hsv(imageRGB)
+            imageHSVhist = np.round(imageHSV * (256 - 1))
+            self.meanHSV[i] = (np.mean(imageHSVhist, axis=(0, 1)))
+        plt.figure()
+        plt.hist(self.meanHSV[:, 0], bins=256, color='red', alpha=0.5)
+        plt.hist(self.meanHSV[:, 1], bins=256, color='green', alpha=0.5)
+        plt.hist(self.meanHSV[:, 2], bins=256, color='blue', alpha=0.5)
+        plt.title(f'Histogramme des moyennes de canaux de couleur pour chaque image')
+        plt.show()
+
+    def generateLabHistograms(self):
+        # Calculer la mayenne de canal de couleur pour chaque image
+        for i in range(len(self.image_list)):
+            imageRGB = self.images[i]
+            imageLab = skic.rgb2lab(imageRGB)
+            imageLabhist = an.rescaleHistLab(imageLab, 256)
+            self.meanLab[i] = np.mean(imageLabhist, axis=(0, 1))
+        plt.figure()
+        plt.hist(self.meanLab[:, 0], bins=256, color='red', alpha=0.5)
+        plt.hist(self.meanLab[:, 1], bins=256, color='green', alpha=0.5)
+        plt.hist(self.meanLab[:, 2], bins=256, color='blue', alpha=0.5)
         plt.title(f'Histogramme des moyennes de canaux de couleur pour chaque image')
         plt.show()
 
