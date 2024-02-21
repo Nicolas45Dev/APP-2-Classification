@@ -22,7 +22,9 @@ def problematique_APP2():
         images.images_display(im_list)
         images.view_histogrammes(im_list)
 
-    # TODO L1.E4.6 à L1.E4.8
+    # La fonction ci-dessous explose
+    # images.generateRGBHistograms()
+
     # images.generateRepresentation()
     plt.show()
 

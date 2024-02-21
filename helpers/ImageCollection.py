@@ -46,6 +46,7 @@ class ImageCollection:
 
         self.all_images_loaded = False
         self.images = []
+        self.histogrammes = []
 
         # Crée un array qui contient toutes les images
         # Dimensions [980, 256, 256, 3]
@@ -78,12 +79,26 @@ class ImageCollection:
                 pixel_values[j, i] = np.count_nonzero(image[:, :, j] == i)
         return pixel_values
 
-    def generateRGBHistograms(self):
+    def generateRGBHistograms(self, color_space=0):
         """
         Calcule les histogrammes RGB de toutes les images
         """
         # TODO L1.E4.6 S'inspirer de view_histogrammes et déménager le code pertinent ici
-        raise NotImplementedError()
+        # Générer les moyennes de canal de couleur pour chaque image
+        for i in range(len(self.image_list)):
+            imageRGB = self.images[i]
+            if color_space == 0:
+                histvalues = self.generateHistogram(imageRGB)
+            elif color_space == 1:
+                imageLab = skic.rgb2lab(imageRGB)
+                imageLabhist = an.rescaleHistLab(imageLab, 256)
+                histvalues = self.generateHistogram(imageLabhist)
+            else:
+                imageHSV = skic.rgb2hsv(imageRGB)
+                imageHSVhist = np.round(imageHSV * (256 - 1))
+                histvalues = self.generateHistogram(imageHSVhist)
+            self.histogrammes.append(histvalues)
+
 
     def generateRepresentation(self):
         # produce a ClassificationData object usable by the classifiers
@@ -129,8 +144,8 @@ class ImageCollection:
                     self.image_folder + os.sep + self.image_list[indexes[image_counter]])
 
             # Exemple de conversion de format pour Lab et HSV
-            imageLab = skic.rgb2lab(imageRGB)  # TODO L1.E4.5: afficher ces nouveaux histogrammes
-            imageHSV = skic.rgb2hsv(imageRGB)  # TODO problématique: essayer d'autres espaces de couleur
+            imageLab = skic.rgb2lab(imageRGB)
+            imageHSV = skic.rgb2hsv(imageRGB)
 
             # Number of bins per color channel pour les histogrammes (et donc la quantification de niveau autres formats)
             n_bins = 256
@@ -159,4 +174,18 @@ class ImageCollection:
             ax[image_counter, 0].set_title(f'histogramme RGB de {image_name}')
 
             # 2e histogramme
-            # TODO L1.E4 afficher les autres histogrammes de Lab ou HSV dans la 2e colonne de subplots
+            # ax[image_counter, 1].scatter(range(start, end), histtvaluesLab[0, start:end], s=3, c='red')
+            # ax[image_counter, 1].scatter(range(start, end), histtvaluesLab[1, start:end], s=3, c='green')
+            # ax[image_counter, 1].scatter(range(start, end), histtvaluesLab[2, start:end], s=3, c='blue')
+            # ax[image_counter, 1].set(xlabel='intensité', ylabel='comptes')
+            # ax[image_counter, 1].set_title(f'histogramme Lab de {image_name}')
+
+            # 3e histogramme
+            ax[image_counter, 1].scatter(range(start, end), histvaluesHSV[0, start:end], s=3, c='red')
+            ax[image_counter, 1].scatter(range(start, end), histvaluesHSV[1, start:end], s=3, c='green')
+            ax[image_counter, 1].scatter(range(start, end), histvaluesHSV[2, start:end], s=3, c='blue')
+            # plot the points
+
+            ax[image_counter, 1].set(xlabel='intensité', ylabel='comptes')
+            ax[image_counter, 1].set_title(f'histogramme HSV de {image_name}')
+
