@@ -45,6 +45,7 @@ from keras.layers import Dense
 from keras.optimizers import SGD
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split as ttsplit
+from sklearn.preprocessing import StandardScaler
 
 import helpers.analysis as an
 import helpers.classifiers as classifiers
@@ -102,30 +103,33 @@ def main():
     # TODO L2.E3.1 Conservez les dimensions qui vous semblent appropriées et décorrélées-les au besoin
     # (e.g. filtering, normalization, dimensionality reduction)
     data, minmax = an.scaleData(data)
-
+    
+        
     # TODO L2.E3.4
-    training_data = data
-    validation_data = []
-    training_target = target
-    validation_target = []
+    training_data, validation_data, training_target, validation_target = ttsplit(data, target, test_size=0.5, random_state=1)
+    # training_data = data
+    # validation_data = []
+    # training_target = target
+    # validation_target = []
 
     # Create neural network
     # TODO L2.E3.3  Tune the number and size of hidden layers
     model = Sequential()
-    model.add(Dense(units=3, activation='linear',
+    model.add(Dense(units=10, activation='tanh',
                     input_shape=(data.shape[-1],)))
-    model.add(Dense(units=target.shape[-1], activation='linear'))
+    model.add(Dense(units=5, activation='sigmoid',input_shape=(data.shape[-1],)))
+    model.add(Dense(units=3, activation='linear',input_shape=(data.shape[-1],)))
     print(model.summary())
 
     # Define training parameters
     # TODO L2.E3.3 Tune the training parameters
-    model.compile(optimizer=SGD(learning_rate=0.001, momentum=0.01), loss='mse')
+    model.compile(optimizer=SGD(learning_rate=0.5, momentum=0.5), loss='mse')
 
     # Perform training
     callback_list = []  # TODO Labo: callbacks
     # TODO L2.E3.3  Tune the training hyperparameters
     model.fit(training_data, training_target, batch_size=len(data), verbose=0,
-              epochs=10, shuffle=True, callbacks=callback_list)  # TODO Labo: ajouter les arguments pour le validation set
+              epochs=1000, shuffle=True, callbacks=callback_list)  # TODO Labo: ajouter les arguments pour le validation set
 
     # Save trained model to disk
     model.save('saves'+os.sep+'iris.keras')

@@ -14,13 +14,13 @@ import numpy as np
 from keras.optimizers import Adam
 from helpers.analysis import project_onto_new_basis
 import keras as K
-
+import sklearn as sklearn
 
 ##########################################
 def labo_APP2():
     data3classes = ClassificationData()
     # Changer le flag dans les sections pertinentes pour chaque partie de laboratoire
-    if True:
+    if False:
         # TODO Labo L1.E1.3 et L3.E1
         print('\n\n=========================\nDonnées originales\n')
         # Affiche les stats de base
@@ -31,7 +31,7 @@ def labo_APP2():
         # exemple d'une densité de probabilité arbitraire pour 1 classe
         an.creer_hist2D(data3classes.dataLists[0], 'C1', view=True)
 
-    if True:
+    if False:
         # Décorrélation
         # TODO Labo L1.E3.5
         # data3classesDecorr = ClassificationData(il_manque_la_decorréleation_ici)
@@ -40,18 +40,18 @@ def labo_APP2():
         data3classesDecorr.getStats(gen_print=True)
         data3classesDecorr.getBorders(view=True)
 
-    if False: # TODO Labo L2.E4
+    if True: # TODO Labo L2.E4
         # Exemple de RN
-        n_neurons = 2
-        n_layers = 1
+        n_neurons = 5
+        n_layers = 3
         # Classification NN
         nn1 = classifiers.NNClassify_APP2(data2train=data3classes, data2test=data3classes,
-                                          n_layers=n_layers, n_neurons=n_neurons, innerActivation='tanh',
-                                          outputActivation='softmax', optimizer=Adam(), loss='binary_crossentropy',
+                                          n_layers=n_layers, n_neurons=n_neurons, innerActivation='sigmoid',
+                                          outputActivation='softmax', optimizer=Adam(learning_rate=0.2), loss='binary_crossentropy',
                                           metrics=['accuracy'],
                                           callback_list=[],     # TODO à compléter L2.E4
                                           experiment_title='NN Simple',
-                                          n_epochs = 10, savename='3classes',
+                                          n_epochs = 1000, savename='3classes',
                                           ndonnees_random=5000, gen_output=True, view=True)
 
     if False:  # TODO L3.E2
