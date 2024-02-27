@@ -50,6 +50,9 @@ class ImageCollection:
         self.meanRGB = np.zeros((len(self.image_list), 3))
         self.meanHSV = np.zeros((len(self.image_list), 3))
         self.meanLab = np.zeros((len(self.image_list), 3))
+        self.stdRGB = np.zeros((len(self.image_list), 3))
+        self.stdHSV = np.zeros((len(self.image_list), 3))
+        self.stdLab = np.zeros((len(self.image_list), 3))
 
         # Crée un array qui contient toutes les images
         # Dimensions [980, 256, 256, 3]
@@ -82,7 +85,7 @@ class ImageCollection:
                 pixel_values[j, i] = np.count_nonzero(image[:, :, j] == i)
         return pixel_values
 
-    def generateRGBHistograms(self):
+    def generateRGBHistograms(self, view=False):
         """
         Calcule les histogrammes RGB de toutes les images
         """
@@ -90,40 +93,46 @@ class ImageCollection:
         for i in range(len(self.image_list)):
             imageRGB = self.images[i]
             self.meanRGB[i] = (np.mean(imageRGB, axis=(0, 1)))
-        plt.figure()
-        plt.hist(self.meanRGB[:, 0], bins=256, color='red', alpha=0.5)
-        plt.hist(self.meanRGB[:, 1], bins=256, color='green', alpha=0.5)
-        plt.hist(self.meanRGB[:, 2], bins=256, color='blue', alpha=0.5)
-        plt.title(f'Histogramme des moyennes de canaux de couleur pour chaque image')
-        plt.show()
+            self.stdRGB[i] = (np.std(imageRGB, axis=(0, 1)))
+        if view:
+            plt.figure()
+            plt.hist(self.meanRGB[:, 0], bins=256, color='red', alpha=0.5)
+            plt.hist(self.meanRGB[:, 1], bins=256, color='green', alpha=0.5)
+            plt.hist(self.meanRGB[:, 2], bins=256, color='blue', alpha=0.5)
+            plt.title(f'Histogramme des moyennes de canaux de couleur pour chaque image')
+            plt.show()
 
-    def generateHSVHistograms(self):
+    def generateHSVHistograms(self, view=False):
         # Calculer la mayenne de canal de couleur pour chaque image
         for i in range(len(self.image_list)):
             imageRGB = self.images[i]
             imageHSV = skic.rgb2hsv(imageRGB)
-            imageHSVhist = np.round(imageHSV * (256 - 1))
-            self.meanHSV[i] = (np.mean(imageHSVhist, axis=(0, 1)))
-        plt.figure()
-        plt.hist(self.meanHSV[:, 0], bins=256, color='red', alpha=0.5)
-        plt.hist(self.meanHSV[:, 1], bins=256, color='green', alpha=0.5)
-        plt.hist(self.meanHSV[:, 2], bins=256, color='blue', alpha=0.5)
-        plt.title(f'Histogramme des moyennes de canaux de couleur pour chaque image')
-        plt.show()
+            self.imageHSVhist = np.round(imageHSV * (256 - 1))
+            self.meanHSV[i] = (np.mean(self.imageHSVhist, axis=(0, 1)))
+            self.stdHSV[i] = (np.std(self.imageHSVhist, axis=(0, 1)))
+        if view:
+            plt.figure()
+            plt.hist(self.imageHSVhist[:, :, 0], bins=256, color='red', alpha=0.5)
+            plt.hist(self.imageHSVhist[:, :, 1], bins=256, color='green', alpha=0.5)
+            plt.hist(self.imageHSVhist[:, :, 2], bins=256, color='blue', alpha=0.5)
+            plt.title(f'Histogramme des moyennes de canaux de couleur pour chaque image')
+            plt.show()
 
-    def generateLabHistograms(self):
+    def generateLabHistograms(self, view=False):
         # Calculer la mayenne de canal de couleur pour chaque image
         for i in range(len(self.image_list)):
             imageRGB = self.images[i]
             imageLab = skic.rgb2lab(imageRGB)
-            imageLabhist = an.rescaleHistLab(imageLab, 256)
-            self.meanLab[i] = np.mean(imageLabhist, axis=(0, 1))
-        plt.figure()
-        plt.hist(self.meanLab[:, 0], bins=256, color='red', alpha=0.5)
-        plt.hist(self.meanLab[:, 1], bins=256, color='green', alpha=0.5)
-        plt.hist(self.meanLab[:, 2], bins=256, color='blue', alpha=0.5)
-        plt.title(f'Histogramme des moyennes de canaux de couleur pour chaque image')
-        plt.show()
+            self.imageLabhist = an.rescaleHistLab(imageLab, 256)
+            self.meanLab[i] = np.mean(self.imageLabhist, axis=(0, 1))
+            self.stdLab[i] = np.std(self.imageLabhist, axis=(0, 1))
+        if view:
+            plt.figure()
+            plt.hist(self.meanLab[:, 0], bins=256, color='red', alpha=0.5)
+            plt.hist(self.meanLab[:, 1], bins=256, color='green', alpha=0.5)
+            plt.hist(self.meanLab[:, 2], bins=256, color='blue', alpha=0.5)
+            plt.title(f'Histogramme des moyennes de canaux de couleur pour chaque image')
+            plt.show()
 
 
     def generateRepresentation(self):
@@ -148,6 +157,33 @@ class ImageCollection:
             else:
                 im = skiio.imread(self.image_folder + os.sep + self.image_list[indexes[i]])
             ax2[i].imshow(im)
+
+    def generateAllHistograms(self, indexes):
+        if type(indexes) == int:
+            indexes = [indexes]
+
+        for image_counter in range(len(indexes)):
+            imageRGB = skiio.imread(self.image_folder + os.sep + self.image_list[indexes[image_counter]])
+
+            imageLab = skic.rgb2lab(imageRGB)
+            imageHSV = skic.rgb2hsv(imageRGB)
+
+            imageLabhist = an.rescaleHistLab(imageLab, 256)  # External rescale pour Lab
+            imageHSVhist = np.round(imageHSV * (256 - 1))  # HSV has all values between 0 and 100
+
+            histvaluesRGB = self.generateHistogram(imageRGB)
+            histtvaluesLab = self.generateHistogram(imageLabhist)
+            histvaluesHSV = self.generateHistogram(imageHSVhist)
+
+            max_red = max(histvaluesRGB[0])
+            max_green = max(histvaluesRGB[1])
+            max_blue = max(histvaluesRGB[2])
+
+            index_red = np.where(histvaluesRGB[0] == max_red)[0][0]
+            index_green = np.where(histvaluesRGB[1] == max_green)[0][0]
+            index_blue = np.where(histvaluesRGB[2] == max_blue)[0][0]
+
+            print("Index of the max count of each channel: ", index_red, max_red, index_green, max_green, index_blue, max_blue)
 
     def view_histogrammes(self, indexes):
         """
@@ -214,4 +250,6 @@ class ImageCollection:
 
             ax[image_counter, 2].set(xlabel='intensité', ylabel='comptes')
             ax[image_counter, 2].set_title(f'histogramme HSV de {image_name}')
+
+            # return histvaluesRGB, histtvaluesLab, histvaluesHSV
 

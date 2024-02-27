@@ -4,13 +4,15 @@ Problématique APP2 Module IA S8
 """
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 from helpers.ImageCollection import ImageCollection
 
 
+
 #######################################
 def problematique_APP2():
-    images = ImageCollection(True)
+    images = ImageCollection(load_all=True)
     # Génère une liste de N images, les visualise et affiche leur histo de couleur
     # TODO: voir L1.E4 et problématique
     if True:
@@ -20,8 +22,7 @@ def problematique_APP2():
         im_list = images.get_samples(N)
         images.images_display(im_list)
         images.view_histogrammes(im_list)
-
-    images.generateHSVHistograms()
+        images.generateAllHistograms(im_list)
 
     # images.generateRepresentation()
     plt.show()
