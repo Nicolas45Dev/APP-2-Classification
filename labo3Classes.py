@@ -6,6 +6,7 @@ APP2 S8 GIA
 
 
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
 from helpers.ClassificationData import ClassificationData
 import helpers.analysis as an
@@ -25,11 +26,10 @@ def labo_APP2():
         print('\n\n=========================\nDonnées originales\n')
         # Affiche les stats de base
         data3classes.getStats(gen_print=True)
-
         # Figure avec les ellipses et les frontières
         data3classes.getBorders(view=True)
         # exemple d'une densité de probabilité arbitraire pour 1 classe
-        an.creer_hist2D(data3classes.dataLists[0], 'C1', view=True)
+        # an.creer_hist2D(data3classes.dataLists[0], 'C1', view=True)
 
     if False:
         # Décorrélation
@@ -40,7 +40,7 @@ def labo_APP2():
         data3classesDecorr.getStats(gen_print=True)
         data3classesDecorr.getBorders(view=True)
 
-    if True: # TODO Labo L2.E4
+    if False: # TODO Labo L2.E4
         # Exemple de RN
         n_neurons = 5
         n_layers = 3
@@ -65,10 +65,10 @@ def labo_APP2():
         # suivi d'un 1-PPV avec ces nouveaux représentants de classes
         ppv1km1 = classifiers.PPVClassify_APP2(data2train=data3classes, data2test=data3classes, n_neighbors=1,
                                                experiment_title='1-PPV sur le 1-moy',
-                                               useKmean=True, n_representants=1,
+                                               useKmean=True, n_representants=7,
                                                gen_output=True, view=True)
 
-    if False:  # TODO L3.E3
+    if True:  # TODO L3.E3
         # Exemple de classification bayésienne
         apriori = [1/3, 1/3, 1/3]
         cost = [[0, 1, 1], [1, 0, 1], [1, 1, 0]]
