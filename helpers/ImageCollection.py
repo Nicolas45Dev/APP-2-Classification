@@ -16,6 +16,9 @@ Méthodes génériques : TODO JB move to helpers
 
 import matplotlib.pyplot as plt
 import numpy as np
+from PIL import Image
+from skimage.feature import canny
+from skimage.transform import hough_line, hough_line_peaks, probabilistic_hough_line
 import os
 import glob
 import random
@@ -23,6 +26,10 @@ from enum import IntEnum, auto
 
 from skimage import color as skic
 from skimage import io as skiio
+from skimage.color import rgb2gray
+from skimage import filters
+from skimage import feature, measure
+from scipy.signal import convolve2d
 
 import helpers.analysis as an
 
@@ -136,9 +143,7 @@ class ImageCollection:
 
 
     def generateRepresentation(self):
-        # produce a ClassificationData object usable by the classifiers
-        # TODO L1.E4.8: commencer l'analyse de la représentation choisie
-        raise NotImplementedError()
+        print("allo")
 
     def images_display(self, indexes):
         """
@@ -156,7 +161,138 @@ class ImageCollection:
                 im = self.images[indexes[i]]
             else:
                 im = skiio.imread(self.image_folder + os.sep + self.image_list[indexes[i]])
+                #im = rgb2gray(im)
             ax2[i].imshow(im)
+
+    def equalizeHistogram(self, indexes):
+        if type(indexes) == int:
+            indexes = [indexes]
+
+        fig3 = plt.figure()
+        ax3 = fig3.subplots(len(indexes), 3)
+        for i in range(len(indexes)):
+            if self.all_images_loaded:
+                im = self.images[indexes[i]]
+            else:
+                im = skiio.imread(self.image_folder + os.sep + self.image_list[indexes[i]])
+            ax3[i, 0].imshow(im)
+            image_equalized, _ = an.equalizeHist(im)
+            ax3[i, 1].imshow(image_equalized)
+            im = rgb2gray(image_equalized)
+            ax3[i, 2].imshow(im, cmap='gray')
+
+    def gaussian_blur(self, image_array, sigma=1):
+        # Définir le noyau du filtre gaussien
+        kernel_size = 2 * int(3 * sigma) + 1
+        gaussian_kernel = np.zeros((kernel_size, kernel_size))
+        for i in range(kernel_size):
+            for j in range(kernel_size):
+                gaussian_kernel[i, j] = np.exp(-((i - kernel_size // 2) ** 2 + (j - kernel_size // 2) ** 2) / (2 * sigma ** 2))
+        gaussian_kernel /= np.sum(gaussian_kernel)
+
+        # Appliquer le filtre de convolution avec le noyau gaussien
+        filtered_image = convolve2d(image_array, gaussian_kernel, mode='same', boundary='wrap')
+
+        return filtered_image
+    def laplace_operator(self, image_array):
+        # Normaliser les valeurs de l'image résultante à [0, 255]
+        norm_image = (image_array - np.min(image_array)) / (
+                np.max(image_array) - np.min(image_array)) * 255
+        # Définir le noyau de l'opérateur de Laplace
+        laplace_kernel = np.array([[0, 1, 0],
+                                   [1, -4, 1],
+                                   [0, 1, 0]])
+
+        # Appliquer le filtre de convolution avec le noyau de Laplace
+        filtered_image = np.zeros_like(image_array)
+        # for i in range(1, image_array.shape[0] - 1):
+        #     for j in range(1, image_array.shape[1] - 1):
+        #         filtered_image[i, j] = np.sum(image_array[i - 1:i + 2, j - 1:j + 2] * laplace_kernel)
+        # filtered_image = filtered_image.astype(np.uint8)
+
+        filtered_image = convolve2d(norm_image, laplace_kernel, mode='same', boundary='symm')
+        filtered_image = (filtered_image - np.min(filtered_image)) / (
+                np.max(filtered_image) - np.min(filtered_image)) * 255
+        return filtered_image
+    def applyFilterEdges(self, indexes):
+        if type(indexes) == int:
+            indexes = [indexes]
+        fig5 = plt.figure()
+        ax5 = fig5.subplots(len(indexes), 4)
+        for i in range(len(indexes)):
+            if self.all_images_loaded:
+                im = self.images[indexes[i]]
+            else:
+                im = skiio.imread(self.image_folder + os.sep + self.image_list[indexes[i]])
+            ax5[i, 0].imshow(im)
+            image_equalized, _ = an.equalizeHist(im)
+            # change image_equalized to uint8
+            ax5[i, 1].imshow(image_equalized)
+            # convert to grayscale
+            im = rgb2gray(image_equalized)
+            ax5[i, 2].imshow(im, cmap='gray')
+            filter_results = self.gaussian_blur(im, sigma=6)
+            filter_results = self.laplace_operator(filter_results)
+            ax5[i, 3].imshow(filter_results, cmap='gray')
+            #self.tangentes = self.find_tangents(filter_results)
+
+    def find_tangents(self, image_laplace):
+        # Appliquer la détection de contours de Canny sur l'image de Laplace (ou tout autre méthode de détection de contours)
+        # edges = (image_laplace > 0).astype(int)
+        edges = canny(image_laplace, sigma=2.0, low_threshold=0.1, high_threshold=0.5)
+
+        # Utiliser la transformée de Hough pour détecter les droites
+        #h, theta, d = hough_line(edges)
+
+        # Trouver les pics dans la transformée de Hough
+        lines = probabilistic_hough_line(edges, threshold=10, line_length=5, line_gap=3)
+
+        # Plot the original image with detected lines
+        fig, axes = plt.subplots(1, 2, figsize=(15, 6))
+        ax0, ax1 = axes.ravel()
+
+        ax0.imshow(image_laplace, cmap=plt.cm.gray)
+        ax0.set_title('Original Image')
+
+        ax1.imshow(edges, cmap=plt.cm.gray)
+        ax1.set_title('Edge Image')
+
+        # Extract and plot the lines
+        for line in lines:
+            p0, p1 = line
+            ax1.plot((p0[0], p1[0]), (p0[1], p1[1]), color='red')
+
+        ax1.set_xlim((0, image_laplace.shape[1]))
+        ax1.set_ylim((image_laplace.shape[0], 0))
+        ax1.set_title('Probabilistic Hough Transform')
+
+        plt.tight_layout()
+        plt.show()
+
+
+        # Calculer les tangentes des droites détectées
+        #tangents = np.tan(angles - np.pi / 2)
+
+        #return tangents
+        return 0
+
+    def applyFilterUnsharp(self, indexes):
+        if type(indexes) == int:
+            indexes = [indexes]
+
+        fig4 = plt.figure()
+        ax4 = fig4.subplots(len(indexes), 3)
+        for i in range(len(indexes)):
+            if self.all_images_loaded:
+                im = self.images[indexes[i]]
+            else:
+                im = skiio.imread(self.image_folder + os.sep + self.image_list[indexes[i]])
+            ax4[i, 0].imshow(im)
+            # convert to grayscale
+            im = rgb2gray(im)
+            ax4[i, 1].imshow(im, cmap='gray')
+            filter_results = filters.unsharp_mask(im, radius=5, amount=2.0)
+            ax4[i, 2].imshow(filter_results)
 
     def generateAllHistograms(self, indexes):
         if type(indexes) == int:

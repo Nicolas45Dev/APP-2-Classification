@@ -12,7 +12,7 @@ from helpers.ImageCollection import ImageCollection
 
 #######################################
 def problematique_APP2():
-    images = ImageCollection(load_all=True)
+    images = ImageCollection()
     # Génère une liste de N images, les visualise et affiche leur histo de couleur
     # TODO: voir L1.E4 et problématique
     if True:
@@ -20,11 +20,13 @@ def problematique_APP2():
         # Analyser quelques images pour développer des pistes pour le choix de la représentation
         N = 6
         im_list = images.get_samples(N)
-        images.images_display(im_list)
-        images.view_histogrammes(im_list)
-        images.generateAllHistograms(im_list)
+        images.applyFilterEdges(im_list)
+        # images.equalizeHistogram(im_list)
+        # images.applyFilterUnsharp(im_list)
+        # images.images_display(im_list)
+        # images.view_histogrammes(im_list)
 
-    # images.generateRepresentation()
+        # images.generateRepresentation()
     plt.show()
 
 

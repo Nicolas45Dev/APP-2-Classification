@@ -482,6 +482,18 @@ def view_classification_results(experiment_title, extent, original_data, colors_
     ax2.axes.set_aspect('equal')
 
 
+def equalizeHist(image, num_bins=256):
+    image_hist, bins = np.histogram(image.flatten(), num_bins, density=True)
+    cdf = image_hist.cumsum()
+    cdf = (num_bins - 1) * cdf / cdf[-1]
+
+    image_equalized = np.interp(image.flatten(), bins[:-1], cdf)
+    # Normalisation des valeurs entre 0 et 1
+    image_equalized = (image_equalized - image_equalized.min()) / (image_equalized.max() - image_equalized.min())
+
+    return image_equalized.reshape(image.shape), cdf
+
+
 def viewEllipse(data, ax, scale=1, facecolor='none', edgecolor='red', **kwargs):
     """
     ***Testé seulement sur les données du labo
