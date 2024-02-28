@@ -231,36 +231,40 @@ class ImageCollection:
             # convert to grayscale
             im = rgb2gray(image_equalized)
             ax5[i, 2].imshow(im, cmap='gray')
-            filter_results = self.gaussian_blur(im, sigma=6)
+            filter_results = self.gaussian_blur(im, sigma=4)
             filter_results = self.laplace_operator(filter_results)
             ax5[i, 3].imshow(filter_results, cmap='gray')
-            #self.tangentes = self.find_tangents(filter_results)
+            self.tangentes = self.find_tangents(filter_results, image_equalized)
 
-    def find_tangents(self, image_laplace):
+    def find_tangents(self, image_laplace, orig_image):
         # Appliquer la détection de contours de Canny sur l'image de Laplace (ou tout autre méthode de détection de contours)
-        # edges = (image_laplace > 0).astype(int)
-        edges = canny(image_laplace, sigma=2.0, low_threshold=0.1, high_threshold=0.5)
+        # edges = (image_laplace > 150).astype(int)
+        #stardart derivation of laplace
+        mean_intensity = np.mean(image_laplace)
 
-        # Utiliser la transformée de Hough pour détecter les droites
-        #h, theta, d = hough_line(edges)
+        # Calculer la somme des carrés des différences entre chaque pixel et la moyenne
+        squared_diff_sum = np.sum((image_laplace - mean_intensity) ** 2)
 
+        # Calculer la dérivation standard en prenant la racine carrée de la moyenne des carrés des différences
+        std_deviation = np.sqrt(squared_diff_sum / image_laplace.size) / 2
+        edges = canny(image_laplace, sigma=1.5, low_threshold=0.2, high_threshold=5)
         # Trouver les pics dans la transformée de Hough
-        lines = probabilistic_hough_line(edges, threshold=10, line_length=5, line_gap=3)
+        lines = probabilistic_hough_line(edges, threshold=4, line_length=12, line_gap=3)
 
         # Plot the original image with detected lines
         fig, axes = plt.subplots(1, 2, figsize=(15, 6))
         ax0, ax1 = axes.ravel()
 
-        ax0.imshow(image_laplace, cmap=plt.cm.gray)
+        ax0.imshow(orig_image)
         ax0.set_title('Original Image')
 
-        ax1.imshow(edges, cmap=plt.cm.gray)
+        # ax1.imshow(edges, cmap=plt.cm.gray)
         ax1.set_title('Edge Image')
 
         # Extract and plot the lines
         for line in lines:
             p0, p1 = line
-            ax1.plot((p0[0], p1[0]), (p0[1], p1[1]), color='red')
+            ax1.plot((p0[0], p1[0]), (p0[1], p1[1]), color='black')
 
         ax1.set_xlim((0, image_laplace.shape[1]))
         ax1.set_ylim((image_laplace.shape[0], 0))
