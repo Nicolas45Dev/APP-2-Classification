@@ -33,7 +33,7 @@ from scipy.signal import convolve2d
 
 import helpers.analysis as an
 
-
+IMAGE_SIZE = 2**16
 class ImageCollection:
     """
     Classe globale pour regrouper les infos utiles et les méthodes de la collection d'images
@@ -42,7 +42,6 @@ class ImageCollection:
         coast = auto()
         forest = auto()
         street = auto()
-
     def __init__(self, load_all=False):
         # liste de toutes les images
         self.image_folder = r"data" + os.sep + "baseDeDonneesImages"
@@ -60,6 +59,7 @@ class ImageCollection:
         self.stdRGB = np.zeros((len(self.image_list), 3))
         self.stdHSV = np.zeros((len(self.image_list), 3))
         self.stdLab = np.zeros((len(self.image_list), 3))
+        self.medianHSV = np.zeros((len(self.image_list), 3))
 
         # Crée un array qui contient toutes les images
         # Dimensions [980, 256, 256, 3]
@@ -82,14 +82,17 @@ class ImageCollection:
     def get_samples(self, N):
         return np.sort(random.sample(range(np.size(self.image_list, 0)), N))
 
-    def generateHistogram(self, image, n_bins=256):
+    def generateHistogram(self, image, n_bins=256, channel=3):
         # Construction des histogrammes
         # 1 histogram per color channel
-        n_channels = 3
+        n_channels = channel
         pixel_values = np.zeros((n_channels, n_bins))
         for i in range(n_bins):
-            for j in range(n_channels):
-                pixel_values[j, i] = np.count_nonzero(image[:, :, j] == i)
+            if n_channels == 1:
+                pixel_values[0, i] = np.count_nonzero(image == i)
+            else:
+                for j in range(n_channels):
+                    pixel_values[j, i] = np.count_nonzero(image[:, :, j] == i)
         return pixel_values
 
     def generateRGBHistograms(self, view=False):
@@ -117,6 +120,7 @@ class ImageCollection:
             self.imageHSVhist = np.round(imageHSV * (256 - 1))
             self.meanHSV[i] = (np.mean(self.imageHSVhist, axis=(0, 1)))
             self.stdHSV[i] = (np.std(self.imageHSVhist, axis=(0, 1)))
+            self.medianHSV = np.median(imageHSV, axis=(0, 1))
         if view:
             plt.figure()
             plt.hist(self.imageHSVhist[:, :, 0], bins=256, color='red', alpha=0.5)
@@ -125,6 +129,40 @@ class ImageCollection:
             plt.title(f'Histogramme des moyennes de canaux de couleur pour chaque image')
             plt.show()
 
+    def grayPixelCount(self, image):
+        grayCount = 0
+        for i in range(len(image[0])):
+            for j in range(len(image[i])):
+                sat = image[i][j][1]
+                if sat < 30:
+                    grayCount = grayCount + 1
+
+        return np.round((grayCount / IMAGE_SIZE) * 100)
+
+    def greenPixelCount(self, image):
+        greenCount = 0
+        # Définir les plages de teinte pour le vert
+        lower_green = np.array([42, 50, 50])  # Borne inférieure pour la teinte verte
+        upper_green = np.array([120, 255, 255])  # Borne supérieure pour la teinte verte
+        for i in range(len(image[0])):
+            for j in range(len(image[i])):
+                if(image[i][j][0] > lower_green[0] and image[i][j][0] < upper_green[0]):
+                    if(image[i][j][1] > lower_green[1] and image[i][j][1] < upper_green[1]):
+                        if(image[i][j][2] > lower_green[2] and image[i][j][2] < upper_green[2]):
+                            greenCount = greenCount + 1
+        return np.round((greenCount / IMAGE_SIZE) * 100)
+    def bluePixelCount(self, image):
+        blueCount = 0
+        # Définir les plages de teinte pour le vert
+        lower_blue = np.array([121, 50, 50])  # Borne inférieure pour la teinte verte
+        upper_blue = np.array([184, 255, 255])  # Borne supérieure pour la teinte verte
+        for i in range(len(image[0])):
+            for j in range(len(image[i])):
+                if(image[i][j][0] > lower_blue[0] and image[i][j][0] < upper_blue[0]):
+                    if(image[i][j][1] > lower_blue[1] and image[i][j][1] < upper_blue[1]):
+                        if(image[i][j][2] > lower_blue[2] and image[i][j][2] < upper_blue[2]):
+                            blueCount = blueCount + 1
+        return np.round((blueCount / IMAGE_SIZE) * 100)
     def generateLabHistograms(self, view=False):
         # Calculer la mayenne de canal de couleur pour chaque image
         for i in range(len(self.image_list)):
@@ -161,15 +199,27 @@ class ImageCollection:
                 im = self.images[indexes[i]]
             else:
                 im = skiio.imread(self.image_folder + os.sep + self.image_list[indexes[i]])
+                imHSV = skic.rgb2hsv(im)
+                imHSV = np.round(imHSV * (256 - 1))
+                pixel_pourcentage_gray = self.grayPixelCount(imHSV)
+                pixel_pourcentage_green = self.greenPixelCount(imHSV)
+                pixel_pourcentage_blue = self.bluePixelCount(imHSV)
+                print("GRAY")
+                print(pixel_pourcentage_gray)
+                print("GREEN")
+                print(pixel_pourcentage_green)
+                print("BLUE")
+                print(pixel_pourcentage_blue)
+                print("**********************")
                 #im = rgb2gray(im)
-            ax2[i].imshow(im)
+            ax2[i].imshow(im, cmap="gray")
 
     def equalizeHistogram(self, indexes):
         if type(indexes) == int:
             indexes = [indexes]
 
         fig3 = plt.figure()
-        ax3 = fig3.subplots(len(indexes), 3)
+        ax3 = fig3.subplots(len(indexes), 2)
         for i in range(len(indexes)):
             if self.all_images_loaded:
                 im = self.images[indexes[i]]
@@ -178,7 +228,7 @@ class ImageCollection:
             ax3[i, 0].imshow(im)
             image_equalized, _ = an.equalizeHist(im)
             ax3[i, 1].imshow(image_equalized)
-            im = rgb2gray(image_equalized)
+            # im = rgb2gray(image_equalized)
             ax3[i, 2].imshow(im, cmap='gray')
 
     def gaussian_blur(self, image_array, sigma=1):
@@ -194,6 +244,9 @@ class ImageCollection:
         filtered_image = convolve2d(image_array, gaussian_kernel, mode='same', boundary='wrap')
 
         return filtered_image
+
+    # Effectuer un filtre de laplace sur une image
+    # Permet de détecter les contours
     def laplace_operator(self, image_array):
         # Normaliser les valeurs de l'image résultante à [0, 255]
         norm_image = (image_array - np.min(image_array)) / (
@@ -202,14 +255,6 @@ class ImageCollection:
         laplace_kernel = np.array([[0, 1, 0],
                                    [1, -4, 1],
                                    [0, 1, 0]])
-
-        # Appliquer le filtre de convolution avec le noyau de Laplace
-        filtered_image = np.zeros_like(image_array)
-        # for i in range(1, image_array.shape[0] - 1):
-        #     for j in range(1, image_array.shape[1] - 1):
-        #         filtered_image[i, j] = np.sum(image_array[i - 1:i + 2, j - 1:j + 2] * laplace_kernel)
-        # filtered_image = filtered_image.astype(np.uint8)
-
         filtered_image = convolve2d(norm_image, laplace_kernel, mode='same', boundary='symm')
         filtered_image = (filtered_image - np.min(filtered_image)) / (
                 np.max(filtered_image) - np.min(filtered_image)) * 255
@@ -234,34 +279,27 @@ class ImageCollection:
             filter_results = self.gaussian_blur(im, sigma=4)
             filter_results = self.laplace_operator(filter_results)
             ax5[i, 3].imshow(filter_results, cmap='gray')
-            self.tangentes = self.find_tangents(filter_results, image_equalized)
+            # Trouver les lignes prevalentes
+            self.find_lines(filter_results, image_equalized, self.image_list[indexes[i]])
 
-    def find_tangents(self, image_laplace, orig_image):
-        # Appliquer la détection de contours de Canny sur l'image de Laplace (ou tout autre méthode de détection de contours)
-        # edges = (image_laplace > 150).astype(int)
-        #stardart derivation of laplace
-        mean_intensity = np.mean(image_laplace)
+    def find_lines(self, image_laplace, orig_image, image_name):
+        # Appliquer la détection de contours de Canny sur l'image de Laplace
 
-        # Calculer la somme des carrés des différences entre chaque pixel et la moyenne
-        squared_diff_sum = np.sum((image_laplace - mean_intensity) ** 2)
-
-        # Calculer la dérivation standard en prenant la racine carrée de la moyenne des carrés des différences
-        std_deviation = np.sqrt(squared_diff_sum / image_laplace.size) / 2
         edges = canny(image_laplace, sigma=1.5, low_threshold=0.2, high_threshold=5)
         # Trouver les pics dans la transformée de Hough
         lines = probabilistic_hough_line(edges, threshold=4, line_length=12, line_gap=3)
 
-        # Plot the original image with detected lines
+        # Plot l<image originale avec les lignes
         fig, axes = plt.subplots(1, 2, figsize=(15, 6))
         ax0, ax1 = axes.ravel()
 
         ax0.imshow(orig_image)
-        ax0.set_title('Original Image')
+        ax0.set_title(image_name)
 
         # ax1.imshow(edges, cmap=plt.cm.gray)
         ax1.set_title('Edge Image')
 
-        # Extract and plot the lines
+        # Extraire et plot les lignes
         for line in lines:
             p0, p1 = line
             ax1.plot((p0[0], p1[0]), (p0[1], p1[1]), color='black')
@@ -272,13 +310,6 @@ class ImageCollection:
 
         plt.tight_layout()
         plt.show()
-
-
-        # Calculer les tangentes des droites détectées
-        #tangents = np.tan(angles - np.pi / 2)
-
-        #return tangents
-        return 0
 
     def applyFilterUnsharp(self, indexes):
         if type(indexes) == int:
@@ -335,7 +366,7 @@ class ImageCollection:
             indexes = [indexes]
 
         fig = plt.figure()
-        ax = fig.subplots(len(indexes), 3)
+        ax = fig.subplots(len(indexes), 2)
 
         for image_counter in range(len(indexes)):
             # charge une image si nécessaire
@@ -348,48 +379,57 @@ class ImageCollection:
             # Exemple de conversion de format pour Lab et HSV
             imageLab = skic.rgb2lab(imageRGB)
             imageHSV = skic.rgb2hsv(imageRGB)
+            imageXYZ = skic.rgb2ycbcr(imageRGB)
+            imagePauvre = rgb2gray(imageRGB)
+
+            imagePauvre = np.round(imagePauvre * 359)
 
             # Number of bins per color channel pour les histogrammes (et donc la quantification de niveau autres formats)
             n_bins = 256
 
             # Lab et HSV requiert un rescaling avant d'histogrammer parce que ce sont des floats au départ!
             imageLabhist = an.rescaleHistLab(imageLab, n_bins) # External rescale pour Lab
-            imageHSVhist = np.round(imageHSV * (n_bins - 1))  # HSV has all values between 0 and 100
+            imageHSVhist = np.round(imageHSV * (360 - 1))  # HSV has all values between 0 and 100
 
             # Construction des histogrammes
             histvaluesRGB = self.generateHistogram(imageRGB)
             histtvaluesLab = self.generateHistogram(imageLabhist)
-            histvaluesHSV = self.generateHistogram(imageHSVhist)
+            histvaluesHSV = self.generateHistogram(imageHSVhist, n_bins=360)
+            histGray = self.generateHistogram(imagePauvre, channel=1)
 
             # permet d'omettre les bins très sombres et très saturées aux bouts des histogrammes
             skip = 5
             start = skip
-            end = n_bins - skip
+            end = 360 - skip
 
             # affichage des histogrammes
-            ax[image_counter, 0].scatter(range(start, end), histvaluesRGB[0, start:end], s=3, c='red')
-            ax[image_counter, 0].scatter(range(start, end), histvaluesRGB[1, start:end], s=3, c='green')
-            ax[image_counter, 0].scatter(range(start, end), histvaluesRGB[2, start:end], s=3, c='blue')
+            ax[image_counter, 0].scatter(range(start, end), histvaluesHSV[0, start:end], s=3, c='red')
+            ax[image_counter, 0].scatter(range(start, end), histvaluesHSV[1, start:end], s=3, c='green')
+            ax[image_counter, 0].scatter(range(start, end), histvaluesHSV[2, start:end], s=3, c='blue')
             ax[image_counter, 0].set(xlabel='intensité', ylabel='comptes')
-            # ajouter le titre de la photo observée dans le titre de l'histogramme
+            # # ajouter le titre de la photo observée dans le titre de l'histogramme
             image_name = self.image_list[indexes[image_counter]]
-            ax[image_counter, 0].set_title(f'histogramme RGB de {image_name}')
-
-            # 2e histogramme
-            ax[image_counter, 1].scatter(range(start, end), histtvaluesLab[0, start:end], s=3, c='red')
-            ax[image_counter, 1].scatter(range(start, end), histtvaluesLab[1, start:end], s=3, c='green')
-            ax[image_counter, 1].scatter(range(start, end), histtvaluesLab[2, start:end], s=3, c='blue')
-            ax[image_counter, 1].set(xlabel='intensité', ylabel='comptes')
-            ax[image_counter, 1].set_title(f'histogramme Lab de {image_name}')
+            # ax[image_counter, 0].set_title(f'histogramme RGB de {image_name}')
+            #
+            # # 2e histogramme
+            # ax[image_counter, 1].scatter(range(start, end), histtvaluesLab[0, start:end], s=3, c='red')
+            # ax[image_counter, 1].scatter(range(start, end), histtvaluesLab[1, start:end], s=3, c='green')
+            # ax[image_counter, 1].scatter(range(start, end), histtvaluesLab[2, start:end], s=3, c='blue')
+            # ax[image_counter, 1].set(xlabel='intensité', ylabel='comptes')
+            # ax[image_counter, 1].set_title(f'histogramme Lab de {image_name}')
 
             # 3e histogramme
-            ax[image_counter, 2].scatter(range(start, end), histvaluesHSV[0, start:end], s=3, c='red')
-            ax[image_counter, 2].scatter(range(start, end), histvaluesHSV[1, start:end], s=3, c='green')
-            ax[image_counter, 2].scatter(range(start, end), histvaluesHSV[2, start:end], s=3, c='blue')
+            # ax[image_counter, 0].scatter(range(start, end), histGray[0, start:end], s=3, c='black')
+            # ax[image_counter, 1].scatter(range(start, end), histvaluesHSV[0, start:end], s=3, c='black')
+            # ax[image_counter, 2].scatter(range(start, end), histvaluesHSV[1, start:end], s=3, c='black')
             # plot the points
 
-            ax[image_counter, 2].set(xlabel='intensité', ylabel='comptes')
-            ax[image_counter, 2].set_title(f'histogramme HSV de {image_name}')
+            ax[image_counter, 0].set(xlabel='intensité', ylabel='comptes')
+            # ax[image_counter, 1].set(xlabel='intensité', ylabel='comptes')
+
+
+            ax[image_counter, 0].set_title(f'histogramme HSV de {image_name}')
+            # ax[image_counter, 1].set_title(f'histogramme HSV de {image_name}')
 
             # return histvaluesRGB, histtvaluesLab, histvaluesHSV
 

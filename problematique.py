@@ -18,13 +18,13 @@ def problematique_APP2():
     if True:
         # TODO L1.E4.3 à L1.E4.5
         # Analyser quelques images pour développer des pistes pour le choix de la représentation
-        N = 6
+        N = 3
         im_list = images.get_samples(N)
-        images.applyFilterEdges(im_list)
+        # images.applyFilterEdges(im_list)
         # images.equalizeHistogram(im_list)
         # images.applyFilterUnsharp(im_list)
-        # images.images_display(im_list)
-        # images.view_histogrammes(im_list)
+        images.images_display(im_list)
+        images.view_histogrammes(im_list)
 
         # images.generateRepresentation()
     plt.show()
