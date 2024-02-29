@@ -20,8 +20,9 @@ def problematique_APP2():
         # Analyser quelques images pour développer des pistes pour le choix de la représentation
         N = 3
         im_list = images.get_samples(N)
-        # images.applyFilterEdges(im_list)
+        images.applyFilterEdges(im_list)
         # images.equalizeHistogram(im_list)
+
         # images.applyFilterUnsharp(im_list)
         images.images_display(im_list)
         images.view_histogrammes(im_list)

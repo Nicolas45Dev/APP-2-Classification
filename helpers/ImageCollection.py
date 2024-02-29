@@ -134,7 +134,7 @@ class ImageCollection:
         for i in range(len(image[0])):
             for j in range(len(image[i])):
                 sat = image[i][j][1]
-                if sat < 30:
+                if sat < 40:
                     grayCount = grayCount + 1
 
         return np.round((grayCount / IMAGE_SIZE) * 100)
@@ -142,7 +142,7 @@ class ImageCollection:
     def greenPixelCount(self, image):
         greenCount = 0
         # Définir les plages de teinte pour le vert
-        lower_green = np.array([42, 50, 50])  # Borne inférieure pour la teinte verte
+        lower_green = np.array([20, 40, 40])  # Borne inférieure pour la teinte verte
         upper_green = np.array([120, 255, 255])  # Borne supérieure pour la teinte verte
         for i in range(len(image[0])):
             for j in range(len(image[i])):
@@ -154,8 +154,8 @@ class ImageCollection:
     def bluePixelCount(self, image):
         blueCount = 0
         # Définir les plages de teinte pour le vert
-        lower_blue = np.array([121, 50, 50])  # Borne inférieure pour la teinte verte
-        upper_blue = np.array([184, 255, 255])  # Borne supérieure pour la teinte verte
+        lower_blue = np.array([120, 40, 40])  # Borne inférieure pour la teinte verte
+        upper_blue = np.array([220, 255, 255])  # Borne supérieure pour la teinte verte
         for i in range(len(image[0])):
             for j in range(len(image[i])):
                 if(image[i][j][0] > lower_blue[0] and image[i][j][0] < upper_blue[0]):
@@ -262,23 +262,23 @@ class ImageCollection:
     def applyFilterEdges(self, indexes):
         if type(indexes) == int:
             indexes = [indexes]
-        fig5 = plt.figure()
-        ax5 = fig5.subplots(len(indexes), 4)
+        # fig5 = plt.figure()
+        # ax5 = fig5.subplots(len(indexes), 4)
         for i in range(len(indexes)):
             if self.all_images_loaded:
                 im = self.images[indexes[i]]
             else:
                 im = skiio.imread(self.image_folder + os.sep + self.image_list[indexes[i]])
-            ax5[i, 0].imshow(im)
+            # ax5[i, 0].imshow(im)
             image_equalized, _ = an.equalizeHist(im)
             # change image_equalized to uint8
-            ax5[i, 1].imshow(image_equalized)
+            # ax5[i, 1].imshow(image_equalized)
             # convert to grayscale
             im = rgb2gray(image_equalized)
-            ax5[i, 2].imshow(im, cmap='gray')
+            # ax5[i, 2].imshow(im, cmap='gray')
             filter_results = self.gaussian_blur(im, sigma=4)
             filter_results = self.laplace_operator(filter_results)
-            ax5[i, 3].imshow(filter_results, cmap='gray')
+            # ax5[i, 3].imshow(filter_results, cmap='gray')
             # Trouver les lignes prevalentes
             self.find_lines(filter_results, image_equalized, self.image_list[indexes[i]])
 
@@ -289,6 +289,7 @@ class ImageCollection:
         # Trouver les pics dans la transformée de Hough
         lines = probabilistic_hough_line(edges, threshold=4, line_length=12, line_gap=3)
 
+        plt.figure()
         # Plot l<image originale avec les lignes
         fig, axes = plt.subplots(1, 2, figsize=(15, 6))
         ax0, ax1 = axes.ravel()
@@ -298,12 +299,19 @@ class ImageCollection:
 
         # ax1.imshow(edges, cmap=plt.cm.gray)
         ax1.set_title('Edge Image')
-
+        angleArray = []
         # Extraire et plot les lignes
         for line in lines:
             p0, p1 = line
             ax1.plot((p0[0], p1[0]), (p0[1], p1[1]), color='black')
-
+            angle_rad = np.arctan2(p1[1] - p0[1], p1[0] - p0[0])
+            angleArray.append(np.degrees(angle_rad) % 360)
+        angleMedian = np.median(angleArray)
+        angleIQR = np.percentile(angleArray, 75) - np.percentile(angleArray, 25)
+        print("Angle médian")
+        print(angleMedian)
+        print("Angle IQR")
+        print(angleIQR)
         ax1.set_xlim((0, image_laplace.shape[1]))
         ax1.set_ylim((image_laplace.shape[0], 0))
         ax1.set_title('Probabilistic Hough Transform')
