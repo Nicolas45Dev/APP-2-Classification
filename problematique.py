@@ -20,14 +20,16 @@ def problematique_APP2():
         # Analyser quelques images pour développer des pistes pour le choix de la représentation
         N = 3
         im_list = images.get_samples(N)
-        images.applyFilterEdges(im_list)
+        # angle1, angle2 = images.applyFilterEdges(im_list)
         # images.equalizeHistogram(im_list)
 
         # images.applyFilterUnsharp(im_list)
         images.images_display(im_list)
-        images.view_histogrammes(im_list)
+        # images.view_histogrammes(im_list)
 
-        # images.generateRepresentation()
+        vecteur = images.generateRepresentation(im_list)
+        np.set_printoptions(precision=4, suppress=True)
+        print(vecteur)
     plt.show()
 
 

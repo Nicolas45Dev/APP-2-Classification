@@ -16,7 +16,6 @@ Méthodes génériques : TODO JB move to helpers
 
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL import Image
 from skimage.feature import canny
 from skimage.transform import hough_line, hough_line_peaks, probabilistic_hough_line
 import os
@@ -28,7 +27,6 @@ from skimage import color as skic
 from skimage import io as skiio
 from skimage.color import rgb2gray
 from skimage import filters
-from skimage import feature, measure
 from scipy.signal import convolve2d
 
 import helpers.analysis as an
@@ -137,12 +135,12 @@ class ImageCollection:
                 if sat < 40:
                     grayCount = grayCount + 1
 
-        return np.round((grayCount / IMAGE_SIZE) * 100)
+        return (grayCount / IMAGE_SIZE)
 
     def greenPixelCount(self, image):
         greenCount = 0
         # Définir les plages de teinte pour le vert
-        lower_green = np.array([20, 40, 40])  # Borne inférieure pour la teinte verte
+        lower_green = np.array([42, 40, 40])  # Borne inférieure pour la teinte verte
         upper_green = np.array([120, 255, 255])  # Borne supérieure pour la teinte verte
         for i in range(len(image[0])):
             for j in range(len(image[i])):
@@ -150,7 +148,19 @@ class ImageCollection:
                     if(image[i][j][1] > lower_green[1] and image[i][j][1] < upper_green[1]):
                         if(image[i][j][2] > lower_green[2] and image[i][j][2] < upper_green[2]):
                             greenCount = greenCount + 1
-        return np.round((greenCount / IMAGE_SIZE) * 100)
+        return (greenCount / IMAGE_SIZE)
+    def redPixelCount(self, image):
+        redCount = 0
+        # Définir les plages de teinte pour le vert
+        lower_red = np.array([42, 40, 40])  # Borne inférieure pour la teinte route
+        upper_red = np.array([220, 255, 255])  # Borne supérieure pour la teinte rouge
+        for i in range(len(image[0])):
+            for j in range(len(image[i])):
+                if(image[i][j][0] < lower_red[0] or image[i][j][0] > upper_red[0]):
+                    if(image[i][j][1] > lower_red[1] and image[i][j][1] < upper_red[1]):
+                        if(image[i][j][2] > lower_red[2] and image[i][j][2] < upper_red[2]):
+                            redCount = redCount + 1
+        return (redCount / IMAGE_SIZE)
     def bluePixelCount(self, image):
         blueCount = 0
         # Définir les plages de teinte pour le vert
@@ -162,7 +172,7 @@ class ImageCollection:
                     if(image[i][j][1] > lower_blue[1] and image[i][j][1] < upper_blue[1]):
                         if(image[i][j][2] > lower_blue[2] and image[i][j][2] < upper_blue[2]):
                             blueCount = blueCount + 1
-        return np.round((blueCount / IMAGE_SIZE) * 100)
+        return (blueCount / IMAGE_SIZE)
     def generateLabHistograms(self, view=False):
         # Calculer la mayenne de canal de couleur pour chaque image
         for i in range(len(self.image_list)):
@@ -180,8 +190,33 @@ class ImageCollection:
             plt.show()
 
 
-    def generateRepresentation(self):
-        print("allo")
+    def generateRepresentation(self, indexes):
+        # Création de la représentation
+        vecteur_representation = np.zeros((len(indexes), 6))
+        # ajoute les pourcentage de pixel gris, rouge, vert, bleu
+        for i in range(len(indexes)):
+            im = skiio.imread(self.image_folder + os.sep + self.image_list[indexes[i]])
+            pixelGr, pixelRed, pixelGreen, pixelBlue = self.applyColorFilter(im)
+            angleMedian, angleIQR = self.applyEdgeFilter(im)
+
+            vecteur_representation[i][0] = pixelGr
+            vecteur_representation[i][1] = pixelRed
+            vecteur_representation[i][2] = pixelGreen
+            vecteur_representation[i][3] = pixelBlue
+            vecteur_representation[i][4] = angleMedian
+            vecteur_representation[i][5] = angleIQR
+        return vecteur_representation
+
+    def applyColorFilter(self, image):
+
+        imHSV = skic.rgb2hsv(image)
+        imHSV = np.round(imHSV * (256 - 1))
+        pixel_pourcentage_gray = self.grayPixelCount(imHSV)
+        pixel_pourcentage_green = self.greenPixelCount(imHSV)
+        pixel_pourcentage_blue = self.bluePixelCount(imHSV)
+        pixel_pourcentage_red = self.redPixelCount(imHSV)
+
+        return pixel_pourcentage_gray, pixel_pourcentage_red, pixel_pourcentage_green, pixel_pourcentage_blue
 
     def images_display(self, indexes):
         """
@@ -194,25 +229,13 @@ class ImageCollection:
 
         fig2 = plt.figure()
         ax2 = fig2.subplots(len(indexes), 1)
+        resultArray = []
         for i in range(len(indexes)):
             if self.all_images_loaded:
                 im = self.images[indexes[i]]
             else:
                 im = skiio.imread(self.image_folder + os.sep + self.image_list[indexes[i]])
-                imHSV = skic.rgb2hsv(im)
-                imHSV = np.round(imHSV * (256 - 1))
-                pixel_pourcentage_gray = self.grayPixelCount(imHSV)
-                pixel_pourcentage_green = self.greenPixelCount(imHSV)
-                pixel_pourcentage_blue = self.bluePixelCount(imHSV)
-                print("GRAY")
-                print(pixel_pourcentage_gray)
-                print("GREEN")
-                print(pixel_pourcentage_green)
-                print("BLUE")
-                print(pixel_pourcentage_blue)
-                print("**********************")
-                #im = rgb2gray(im)
-            ax2[i].imshow(im, cmap="gray")
+            ax2[i].imshow(im)
 
     def equalizeHistogram(self, indexes):
         if type(indexes) == int:
@@ -256,68 +279,46 @@ class ImageCollection:
                                    [1, -4, 1],
                                    [0, 1, 0]])
         filtered_image = convolve2d(norm_image, laplace_kernel, mode='same', boundary='symm')
+        #normalisez la réponse laplace
         filtered_image = (filtered_image - np.min(filtered_image)) / (
                 np.max(filtered_image) - np.min(filtered_image)) * 255
         return filtered_image
-    def applyFilterEdges(self, indexes):
-        if type(indexes) == int:
-            indexes = [indexes]
-        # fig5 = plt.figure()
-        # ax5 = fig5.subplots(len(indexes), 4)
-        for i in range(len(indexes)):
-            if self.all_images_loaded:
-                im = self.images[indexes[i]]
-            else:
-                im = skiio.imread(self.image_folder + os.sep + self.image_list[indexes[i]])
-            # ax5[i, 0].imshow(im)
-            image_equalized, _ = an.equalizeHist(im)
-            # change image_equalized to uint8
-            # ax5[i, 1].imshow(image_equalized)
-            # convert to grayscale
-            im = rgb2gray(image_equalized)
-            # ax5[i, 2].imshow(im, cmap='gray')
-            filter_results = self.gaussian_blur(im, sigma=4)
-            filter_results = self.laplace_operator(filter_results)
-            # ax5[i, 3].imshow(filter_results, cmap='gray')
-            # Trouver les lignes prevalentes
-            self.find_lines(filter_results, image_equalized, self.image_list[indexes[i]])
+    def applyEdgeFilter(self, image):
+        # ax5[i, 0].imshow(im)
+        image_equalized, _ = an.equalizeHist(image)
+        # change image_equalized to uint8
+        # ax5[i, 1].imshow(image_equalized)
+        # convert to grayscale
+        grayImage = rgb2gray(image_equalized)
+        # ax5[i, 2].imshow(im, cmap='gray')
+        filter_results = self.gaussian_blur(grayImage, sigma=4)
+        filter_results = self.laplace_operator(filter_results)
+        # ax5[i, 3].imshow(filter_results, cmap='gray')
+        # Trouver les lignes prevalentes
+        return self.find_lines(filter_results)
 
-    def find_lines(self, image_laplace, orig_image, image_name):
+
+    def find_lines(self, image_laplace):
         # Appliquer la détection de contours de Canny sur l'image de Laplace
-
         edges = canny(image_laplace, sigma=1.5, low_threshold=0.2, high_threshold=5)
         # Trouver les pics dans la transformée de Hough
         lines = probabilistic_hough_line(edges, threshold=4, line_length=12, line_gap=3)
-
-        plt.figure()
-        # Plot l<image originale avec les lignes
-        fig, axes = plt.subplots(1, 2, figsize=(15, 6))
-        ax0, ax1 = axes.ravel()
-
-        ax0.imshow(orig_image)
-        ax0.set_title(image_name)
-
-        # ax1.imshow(edges, cmap=plt.cm.gray)
-        ax1.set_title('Edge Image')
+        # defined array
         angleArray = []
+        lineArray = []
         # Extraire et plot les lignes
         for line in lines:
             p0, p1 = line
-            ax1.plot((p0[0], p1[0]), (p0[1], p1[1]), color='black')
+            lineArray.append((p0, p1))
             angle_rad = np.arctan2(p1[1] - p0[1], p1[0] - p0[0])
             angleArray.append(np.degrees(angle_rad) % 360)
+
         angleMedian = np.median(angleArray)
         angleIQR = np.percentile(angleArray, 75) - np.percentile(angleArray, 25)
-        print("Angle médian")
-        print(angleMedian)
-        print("Angle IQR")
-        print(angleIQR)
-        ax1.set_xlim((0, image_laplace.shape[1]))
-        ax1.set_ylim((image_laplace.shape[0], 0))
-        ax1.set_title('Probabilistic Hough Transform')
-
-        plt.tight_layout()
-        plt.show()
+        # Normalisation des angles entre 0 et 1
+        angleMedian = angleMedian / 360
+        angleIQR = angleIQR / 360
+        return angleMedian, angleIQR
 
     def applyFilterUnsharp(self, indexes):
         if type(indexes) == int:
@@ -336,6 +337,7 @@ class ImageCollection:
             ax4[i, 1].imshow(im, cmap='gray')
             filter_results = filters.unsharp_mask(im, radius=5, amount=2.0)
             ax4[i, 2].imshow(filter_results)
+
 
     def generateAllHistograms(self, indexes):
         if type(indexes) == int:
