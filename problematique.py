@@ -44,15 +44,12 @@ def problematique_APP2():
                                                 gen_output=True, view=True)
     # PPV Classifier
     if True:
-        # ppv1 = classifiers.PPVClassify_APP2(data2train=all_representations, n_neighbors=1,
-        #                                     experiment_title='1-PPV avec données orig comme représentants',
-        #                                    gen_output=True, view=False)
         # 1-mean sur chacune des classes
         # suivi d'un 1-PPV avec ces nouveaux représentants de classes
         ppv1km1 = classifiers.PPVClassify_APP2(data2train=all_representations, data2test=all_representations, n_neighbors=1,
                                                experiment_title='1-PPV sur le 1-moy',
                                                useKmean=True, n_representants=7,
-                                               gen_output=True, view=False)
+                                               gen_output=True, view=True)
     # ML Classification
     if False:
         # Exemple de RN
@@ -72,3 +69,4 @@ def problematique_APP2():
 ######################################
 if __name__ == '__main__':
     problematique_APP2()
+    plt.show()

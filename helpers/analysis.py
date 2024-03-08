@@ -469,29 +469,55 @@ def view_classification_results(experiment_title, extent, original_data, colors_
     """
     cmap = cm.get_cmap('seismic')
     if np.asarray(test2data).any():
-        fig, (ax1, ax2, ax3) = plt.subplots(3, 1)
+        fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1)
         if np.asarray(test2errors).any():
             colors_test2[test2errors] = error_class
-        ax3.scatter(test2data[:, 0], test2data[:, 1], s=5, c=cmap(colors_test2))
-        ax3.set_title(title_test2)
-        ax3.set_xlim([extent.xmin, extent.xmax])
-        ax3.set_ylim([extent.ymin, extent.ymax])
-        ax3.axes.set_aspect('equal')
+        ax4.scatter(test2data[:, 0], test2data[:, 1], s=5, c=cmap(colors_test2))
+        ax4.set_title(title_test2)
+        ax4.set_xlim([extent.min[0], extent.max[0]])
+        ax4.set_ylim([extent.min[0], extent.max[0]])
+        ax4.axes.set_aspect('equal')
     else:
-        fig, (ax1, ax2) = plt.subplots(2, 1)
+        fig, (ax1, ax2, ax3) = plt.subplots(3, 1)
+
     fig.suptitle(experiment_title)
-    ax1.scatter(original_data[:, 0], original_data[:, 1], s=5, c=colors_original, cmap='viridis')
+
+    a = original_data[:, 0]
+    b = original_data[:, 1]
+    c = original_data[:, 2]
+
+    ax = fig.add_subplot(311, projection='3d')
+    ax.scatter(a, b, c)
+
+    d = original_data[:, 3]
+    e = original_data[:, 4]
+    f = original_data[:, 5]
+
+    ax = fig.add_subplot(312, projection='3d')
+    ax.scatter(d, e, f)
+
+
     if np.asarray(test1errors).any():
         colors_test1[test1errors] = error_class
-    ax2.scatter(test1data[:, 0], test1data[:, 1], s=5, c=colors_test1, cmap='viridis')
+    ax3.scatter(test1data[:, 0], test1data[:, 1], s=5, c=colors_test1, cmap='viridis')
+
     ax1.set_title(title_original)
     ax2.set_title(title_test1)
-    ax1.set_xlim([extent.xmin, extent.xmax])
-    ax1.set_ylim([extent.ymin, extent.ymax])
-    ax2.set_xlim([extent.xmin, extent.xmax])
-    ax2.set_ylim([extent.ymin, extent.ymax])
+
+    ax1.set_xlim([extent.min[0], extent.max[0]])
+    ax1.set_ylim([extent.min[1], extent.max[1]])
+    #ax1.set_zlim([extent.min[2], extent.max[2]])
+
+
+    ax2.set_xlim([extent.min[3], extent.max[3]])
+    ax2.set_ylim([extent.min[4], extent.max[4]])
+    #ax2.set_zlim([extent.min[5], extent.max[5]])
+
+
     ax1.axes.set_aspect('equal')
     ax2.axes.set_aspect('equal')
+    ax3.axes.set_aspect('equal')
+
 
 
 def equalizeHist(image, num_bins=256):
