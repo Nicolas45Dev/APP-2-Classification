@@ -59,6 +59,29 @@ class ImageCollection:
         self.stdLab = np.zeros((len(self.image_list), 3))
         self.medianHSV = np.zeros((len(self.image_list), 3))
 
+        self.images_coast = []
+        self.images_forest = []
+        self.images_street = []
+
+        self.coast_representation_mean = []
+        self.coast_representation_std = []
+        self.coast_representation_cov = []
+        self.coast_representation_eigen = []
+
+        self.forest_representation_mean = []
+        self.forest_representation_std = []
+        self.forest_representation_cov = []
+        self.forest_representation_eigen = []
+
+        self.street_representation_mean = []
+        self.street_representation_std = []
+        self.street_representation_cov = []
+        self.street_representation_eigen = []
+
+        self.representation_coast = np.zeros((len(self.image_list), 6))
+        self.representation_forest = np.zeros((len(self.image_list), 6))
+        self.representation_street = np.zeros((len(self.image_list), 6))
+
         # Crée un array qui contient toutes les images
         # Dimensions [980, 256, 256, 3]
         #            [Nombre image, hauteur, largeur, RGB]
@@ -67,13 +90,16 @@ class ImageCollection:
             self.all_images_loaded = True
 
         self.labels = []
-        for i in image_list:
-            if 'coast' in i:
+        for i in range(len(self.image_list)):
+            if 'coast' in self.image_list[i]:
                 self.labels.append(ImageCollection.imageLabels.coast)
-            elif 'forest' in i:
+                self.images_coast.append(self.images[i])
+            elif 'forest' in self.image_list[i]:
                 self.labels.append(ImageCollection.imageLabels.forest)
-            elif 'street' in i:
+                self.images_forest.append(self.images[i])
+            elif 'street' in self.image_list[i]:
                 self.labels.append(ImageCollection.imageLabels.street)
+                self.images_street.append(self.images[i])
             else:
                 raise ValueError(i)
 
@@ -192,20 +218,40 @@ class ImageCollection:
 
     def generateRepresentation(self, indexes):
         # Création de la représentation
-        vecteur_representation = np.zeros((len(indexes), 6))
-        # ajoute les pourcentage de pixel gris, rouge, vert, bleu
-        for i in range(len(indexes)):
-            im = skiio.imread(self.image_folder + os.sep + self.image_list[indexes[i]])
-            pixelGr, pixelRed, pixelGreen, pixelBlue = self.applyColorFilter(im)
-            angleMedian, angleIQR = self.applyEdgeFilter(im)
+        # ajoute les pourcentages de pixel gris, rouge, vert, bleu
+        for i in range(len(self.images_coast)):
+            pixelGr, pixelRed, pixelGreen, pixelBlue = self.applyColorFilter(self.images_coast[i])
+            angleMedian, angleIQR = self.applyEdgeFilter(self.images_coast[i])
 
-            vecteur_representation[i][0] = pixelGr
-            vecteur_representation[i][1] = pixelRed
-            vecteur_representation[i][2] = pixelGreen
-            vecteur_representation[i][3] = pixelBlue
-            vecteur_representation[i][4] = angleMedian
-            vecteur_representation[i][5] = angleIQR
-        return vecteur_representation
+            self.representation_coast[i][0] = pixelGr
+            self.representation_coast[i][1] = pixelRed
+            self.representation_coast[i][2] = pixelGreen
+            self.representation_coast[i][3] = pixelBlue
+            self.representation_coast[i][4] = angleMedian
+            self.representation_coast[i][5] = angleIQR
+
+        for i in range(len(self.images_forest)):
+            pixelGr, pixelRed, pixelGreen, pixelBlue = self.applyColorFilter(self.images_forest[i])
+            angleMedian, angleIQR = self.applyEdgeFilter(self.images_forest[i])
+
+            self.representation_forest[i][0] = pixelGr
+            self.representation_forest[i][1] = pixelRed
+            self.representation_forest[i][2] = pixelGreen
+            self.representation_forest[i][3] = pixelBlue
+            self.representation_forest[i][4] = angleMedian
+            self.representation_forest[i][5] = angleIQR
+
+        for i in range(len(self.images_street)):
+            pixelGr, pixelRed, pixelGreen, pixelBlue = self.applyColorFilter(self.images_street[i])
+            angleMedian, angleIQR = self.applyEdgeFilter(self.images_street[i])
+
+            self.representation_street[i][0] = pixelGr
+            self.representation_street[i][1] = pixelRed
+            self.representation_street[i][2] = pixelGreen
+            self.representation_street[i][3] = pixelBlue
+            self.representation_street[i][4] = angleMedian
+            self.representation_street[i][5] = angleIQR
+        print("Street done")
 
     def applyColorFilter(self, image):
 
@@ -236,6 +282,29 @@ class ImageCollection:
             else:
                 im = skiio.imread(self.image_folder + os.sep + self.image_list[indexes[i]])
             ax2[i].imshow(im)
+
+    def do_pca_coast(self, representation):
+        # Compute average and std of all representation
+        # Then compute eighenvalues and eigenvectors
+        for i in representation:
+            self.coast_representation_mean.append(np.mean(i, axis=0))
+            self.coast_representation_std.append(np.std(i, axis=0))
+            cov = np.cov(i.T)
+
+    def do_pca_forest(self, representation):
+        # Compute average and std of all representation
+        # Then compute eighenvalues and eigenvectors
+        for i in representation:
+            self.forest_representation_mean.append(np.mean(representation[i], axis=0))
+            self.forest_representation_std.append(np.std(representation[i], axis=0))
+
+    def do_pca_street(self, representation):
+        # Compute average and std of all representation
+        # Then compute eighenvalues and eigenvectors
+        for i in representation:
+            self.street_representation_mean.append(np.mean(representation[i], axis=0))
+            self.street_representation_std.append(np.std(representation[i], axis=0))
+
 
     def equalizeHistogram(self, indexes):
         if type(indexes) == int:
