@@ -79,9 +79,6 @@ class ImageCollection:
         self.street_representation_cov = []
         self.street_representation_eigen = []
 
-        self.representation_coast = np.zeros((len(self.image_list), 6))
-        self.representation_forest = np.zeros((len(self.image_list), 6))
-        self.representation_street = np.zeros((len(self.image_list), 6))
 
         # Crée un array qui contient toutes les images
         # Dimensions [980, 256, 256, 3]
@@ -103,7 +100,9 @@ class ImageCollection:
                 self.images_street.append(self.images[i])
             else:
                 raise ValueError(i)
-
+        self.representation_coast = np.zeros((len(self.images_coast), 6))
+        self.representation_forest = np.zeros((len(self.images_forest), 6))
+        self.representation_street = np.zeros((len(self.images_street), 6))
         self.image_types = [
             (self.images_coast, self.representation_coast),
             (self.images_forest, self.representation_forest),
