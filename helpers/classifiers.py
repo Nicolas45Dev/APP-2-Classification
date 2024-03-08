@@ -164,8 +164,6 @@ class BayesClassifier:
 
         # reshape pour que les lignes soient les calculs pour 1 point original
         classProbDensities = np.array(classProbDensities).T
-        # Ajustement pour le coût
-        # classProbDensities *= self.costs
 
         # calcul de la prédiction en tenant compte de l'apriori et du coût
         predictions = np.argmax(classProbDensities, axis=1).reshape(testDataNSamples, 1)
