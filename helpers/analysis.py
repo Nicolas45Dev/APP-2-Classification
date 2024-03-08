@@ -52,7 +52,7 @@ class Extent:
         get_array: retourne les min max formattés en array
         get_corners: retourne les coordonnées des points aux coins d'un range couvert par les min max
     """
-    def __init__(self, xmin=0, xmax=10, ymin=0, ymax=10, ptList=None):
+    def __init__(self, ptList=None):
         """
         Constructeur
         2 options:
@@ -60,27 +60,31 @@ class Extent:
             passer 1 array qui contient les des points sur lesquels sont calculées les min et max
         """
         if ptList is not None:
-            self.xmin = np.floor(np.min(ptList[:,0]))-1
-            self.xmax = np.ceil(np.max(ptList[:,0]))+1
-            self.ymin = np.floor(np.min(ptList[:,1]))-1
-            self.ymax = np.ceil(np.max(ptList[:,1]))+1
-        else:
-            self.xmin = xmin
-            self.xmax = xmax
-            self.ymin = ymin
-            self.ymax = ymax
+            self.dimensions = len(ptList[0])
+            limits = np.full((self.dimensions, 2), (np.inf, -np.inf))
+
+            for sub_list in ptList:
+                for i, value in enumerate(sub_list):
+                    limits[i, 0] = min(limits[i, 0], value)
+                    limits[i, 1] = max(limits[i, 1], value)
+
+            # Appliquer floor et ceil aux limites
+            limits[:, 0] = np.floor(limits[:, 0])
+            limits[:, 1] = np.ceil(limits[:, 1])
+            self.limits = limits
 
     def get_array(self):
         """
         Accesseur qui retourne sous format matriciel
         """
-        return [[self.xmin, self.xmax], [self.ymin, self.ymax]]
+        return self.limit
 
     def get_corners(self):
         """
         Accesseur qui retourne une liste points qui correspondent aux 4 coins d'un range 2D bornés par les min max
         """
-        return np.array(list(itertools.product([self.xmin, self.xmax], [self.ymin, self.ymax])))
+        return list(itertools.product(*self.limit))
+
 
 
 def calc_erreur_classification(original_data, classified_data, gen_output=False):
@@ -178,8 +182,13 @@ def descaleData(x, minmax):
 def genDonneesTest(ndonnees, extent):
     # génération de n données aléatoires 2D sur une plage couverte par extent
     # TODO JB: generalize to N-D
-    return np.transpose(np.array([(extent.xmax - extent.xmin) * np.random.random(ndonnees) + extent.xmin,
-                                         (extent.ymax - extent.ymin) * np.random.random(ndonnees) + extent.ymin]))
+    result = []
+    for _ in range(ndonnees):
+        element = [random.uniform(extent.limits[i,0], extent.limits[i,1]) for i in range(extent.dimensions)]
+        result.append(element)
+
+    return result
+
 
 
 def plot_metrics(NNmodel):
@@ -462,8 +471,8 @@ def view_classification_results(experiment_title, extent, original_data, colors_
             colors_test2[test2errors] = error_class
         ax3.scatter(test2data[:, 0], test2data[:, 1], s=5, c=cmap(colors_test2))
         ax3.set_title(title_test2)
-        ax3.set_xlim([extent.xmin, extent.xmax])
-        ax3.set_ylim([extent.ymin, extent.ymax])
+        ax3.set_xlim([extent.limits[0,0], extent.limits[0,1]])
+        ax3.set_ylim([extent.limits[1,0], extent.limits[1,0]])
         ax3.axes.set_aspect('equal')
     else:
         fig, (ax1, ax2) = plt.subplots(2, 1)
@@ -474,10 +483,10 @@ def view_classification_results(experiment_title, extent, original_data, colors_
     ax2.scatter(test1data[:, 0], test1data[:, 1], s=5, c=colors_test1, cmap='viridis')
     ax1.set_title(title_original)
     ax2.set_title(title_test1)
-    ax1.set_xlim([extent.xmin, extent.xmax])
-    ax1.set_ylim([extent.ymin, extent.ymax])
-    ax2.set_xlim([extent.xmin, extent.xmax])
-    ax2.set_ylim([extent.ymin, extent.ymax])
+    ax1.set_xlim([extent.limits[0,0], extent.limits[0,1]])
+    ax1.set_ylim([extent.limits[1,0], extent.limits[1,1]])
+    ax2.set_xlim([extent.limits[0,0], extent.limits[0,1]])
+    ax2.set_ylim([extent.limits[1,0], extent.limits[1,1]])
     ax1.axes.set_aspect('equal')
     ax2.axes.set_aspect('equal')
 

@@ -27,9 +27,9 @@ def problematique_APP2():
         # np.save("representation_coast.npy", images.representation_coast)
         # np.save("representation_forest.npy", images.representation_forest)
         # np.save("representation_street.npy", images.representation_street)
-        # representation_coast = np.load("representation_coast.npy")
-        # representation_forest = np.load("representation_forest.npy")
-        # representation_street = np.load("representation_street.npy")
+        representation_coast = np.load("representation_coast.npy")
+        representation_forest = np.load("representation_forest.npy")
+        representation_street = np.load("representation_street.npy")
 
         all_representations = ClassificationData()
         # images.do_pca_coast(representation_coast)
