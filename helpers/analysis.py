@@ -60,21 +60,29 @@ class Extent:
             passer 1 array qui contient les des points sur lesquels sont calculées les min et max
         """
         if ptList is not None:
-            self.xmin = np.floor(np.min(ptList[:,0]))-1
-            self.xmax = np.ceil(np.max(ptList[:,0]))+1
-            self.ymin = np.floor(np.min(ptList[:,1]))-1
-            self.ymax = np.ceil(np.max(ptList[:,1]))+1
+            self.min = []
+            self.max = []
+
+            for i in range(len(ptList[0])):
+                self.min.append(np.floor(np.min(ptList[:,i]))-1)
+                self.max.append(np.ceil(np.max(ptList[:,1]))+1)
+
         else:
-            self.xmin = xmin
-            self.xmax = xmax
-            self.ymin = ymin
-            self.ymax = ymax
+            self.min = []
+            self.max = []
+
+            for i in range(6):
+                self.min.append(0)
+                self.max.append(10)
 
     def get_array(self):
         """
         Accesseur qui retourne sous format matriciel
         """
-        return [[self.xmin, self.xmax], [self.ymin, self.ymax]]
+        result = []
+        for i in range(len(self.min)):
+            result.append([self.min[i], self.max[i]])
+        return result
 
     def get_corners(self):
         """
@@ -178,8 +186,12 @@ def descaleData(x, minmax):
 def genDonneesTest(ndonnees, extent):
     # génération de n données aléatoires 2D sur une plage couverte par extent
     # TODO JB: generalize to N-D
-    return np.transpose(np.array([(extent.xmax - extent.xmin) * np.random.random(ndonnees) + extent.xmin,
-                                         (extent.ymax - extent.ymin) * np.random.random(ndonnees) + extent.ymin]))
+    result = []
+
+    for i in range(len(extent.min)):
+        result.append((extent.max[i] - extent.min[i]) * np.random.random(ndonnees) + extent.min[i])
+
+    return np.transpose(result)
 
 
 def plot_metrics(NNmodel):

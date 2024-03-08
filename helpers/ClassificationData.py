@@ -36,9 +36,9 @@ class ClassificationData:
             self.dataLists = []
             # Import data from text files in subdir
 
-            self.dataLists.append(np.load("representation_coast.npy"))
-            self.dataLists.append(np.load("representation_forest.npy"))
-            self.dataLists.append(np.load("representation_street.npy"))
+            self.dataLists.append(np.load("representation_coast.npy")[:275])
+            self.dataLists.append(np.load("representation_forest.npy")[:275])
+            self.dataLists.append(np.load("representation_street.npy")[:275])
 
         # reorganisation en 1 seul vecteur pour certains entraînements et les predicts
         self.dataLists = np.array(self.dataLists)

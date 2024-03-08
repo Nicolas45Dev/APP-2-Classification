@@ -207,7 +207,7 @@ class PPVClassifier:
         # TODO L2.E3.1 Compléter la logique pour utiliser la librairie ici
         # le 1 est suspect et il manque des arguments
         self.n_classes, _, self.representationDimensions = np.asarray(data2train.dataLists).shape
-        self.kNN = KNN(n_neighbors)  # minkowski correspond à distance euclidienne lorsque le paramètre p = 2
+        self.kNN = KNN(n_neighbors, p=2)  # minkowski correspond à distance euclidienne lorsque le paramètre p = 2
         # Exécute un clustering pour calculer les représentants de classe si demandés
         if useKmean:
             assert n_represantants >= n_neighbors
@@ -225,7 +225,7 @@ class PPVClassifier:
         _, testDataDimensions = np.asarray(testdata1array).shape
         assert testDataDimensions == self.representationDimensions
         predictions = self.kNN.predict(testdata1array)
-        predictions = predictions.reshape(len(testdata1array), 1)
+        predictions = predictions.reshape(len(predictions), 1)
         if np.asarray(expected_labels1array).any():
             errors_indexes = an.calc_erreur_classification(expected_labels1array, predictions, gen_output)
         else:
@@ -240,10 +240,12 @@ class PPVClassify_APP2:
         print('\n\n=========================\nNouveau classificateur: '+experiment_title)
         self.classifier = PPVClassifier(data2train, n_neighbors=n_neighbors, metric=metric,
                                         useKmean=useKmean, n_represantants=n_representants, experiment_title=experiment_title,
-                                        view=True)
+                                        view=view)
         self.donneesTestRandom = an.genDonneesTest(ndonnees_random, data2train.extent)
+        print('\n Random')
         self.predictRandom, _ = self.classifier.predict(self.donneesTestRandom)  # classifie les données de test
         if np.asarray(data2test).any():   # classifie les données de test2 si présentes
+            print('\n Data')
             self.predictTest, self.error_indexes = \
                 self.classifier.predict(data2test.data1array, data2test.labels1array, gen_output=gen_output)
         else:
