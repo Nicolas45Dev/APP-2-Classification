@@ -35,9 +35,10 @@ class ClassificationData:
         else:
             self.dataLists = []
             # Import data from text files in subdir
-            self.dataLists.append(np.loadtxt('data'+os.sep+'data_3classes'+os.sep+'C1.txt'))
-            self.dataLists.append(np.loadtxt('data'+os.sep+'data_3classes'+os.sep+'C2.txt'))
-            self.dataLists.append(np.loadtxt('data'+os.sep+'data_3classes'+os.sep+'C3.txt'))
+
+            self.dataLists.append(np.load("representation_coast.npy"))
+            self.dataLists.append(np.load("representation_forest.npy"))
+            self.dataLists.append(np.load("representation_street.npy"))
 
         # reorganisation en 1 seul vecteur pour certains entraînements et les predicts
         self.dataLists = np.array(self.dataLists)

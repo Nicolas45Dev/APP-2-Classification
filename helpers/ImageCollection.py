@@ -28,6 +28,7 @@ from skimage import io as skiio
 from skimage.color import rgb2gray
 from skimage import filters
 from scipy.signal import convolve2d
+from scipy.ndimage import convolve1d
 
 import helpers.analysis as an
 
@@ -103,6 +104,12 @@ class ImageCollection:
             else:
                 raise ValueError(i)
 
+        self.image_types = [
+            (self.images_coast, self.representation_coast),
+            (self.images_forest, self.representation_forest),
+            (self.images_street, self.representation_street)
+        ]
+
     def get_samples(self, N):
         return np.sort(random.sample(range(np.size(self.image_list, 0)), N))
 
@@ -153,52 +160,33 @@ class ImageCollection:
             plt.title(f'Histogramme des moyennes de canaux de couleur pour chaque image')
             plt.show()
 
-    def grayPixelCount(self, image):
-        grayCount = 0
-        for i in range(len(image[0])):
-            for j in range(len(image[i])):
-                sat = image[i][j][1]
-                if sat < 40:
-                    grayCount = grayCount + 1
+    def count_pixels_in_range(self, image, lower_bound, upper_bound):
+        mask = np.all((image >= lower_bound) & (image <= upper_bound), axis=2)
+        count = np.sum(mask)
+        return count / (image.shape[0] * image.shape[1])
 
-        return (grayCount / IMAGE_SIZE)
+    def grayPixelCount(self, image):
+        lower_gray = np.array([0, 0, 0])  # Borne inférieure pour la teinte grise
+        upper_gray = np.array([255, 40, 255])  # Borne supérieure pour la teinte grise
+        return self.count_pixels_in_range(image, lower_gray, upper_gray)
 
     def greenPixelCount(self, image):
-        greenCount = 0
-        # Définir les plages de teinte pour le vert
         lower_green = np.array([42, 40, 40])  # Borne inférieure pour la teinte verte
         upper_green = np.array([120, 255, 255])  # Borne supérieure pour la teinte verte
-        for i in range(len(image[0])):
-            for j in range(len(image[i])):
-                if(image[i][j][0] > lower_green[0] and image[i][j][0] < upper_green[0]):
-                    if(image[i][j][1] > lower_green[1] and image[i][j][1] < upper_green[1]):
-                        if(image[i][j][2] > lower_green[2] and image[i][j][2] < upper_green[2]):
-                            greenCount = greenCount + 1
-        return (greenCount / IMAGE_SIZE)
+        return self.count_pixels_in_range(image, lower_green, upper_green)
+
     def redPixelCount(self, image):
-        redCount = 0
         # Définir les plages de teinte pour le vert
-        lower_red = np.array([42, 40, 40])  # Borne inférieure pour la teinte route
-        upper_red = np.array([220, 255, 255])  # Borne supérieure pour la teinte rouge
-        for i in range(len(image[0])):
-            for j in range(len(image[i])):
-                if(image[i][j][0] < lower_red[0] or image[i][j][0] > upper_red[0]):
-                    if(image[i][j][1] > lower_red[1] and image[i][j][1] < upper_red[1]):
-                        if(image[i][j][2] > lower_red[2] and image[i][j][2] < upper_red[2]):
-                            redCount = redCount + 1
-        return (redCount / IMAGE_SIZE)
+        lower_red1 = np.array([0, 40, 40])  # Borne inférieure pour la teinte route
+        upper_red1 = np.array([42, 255, 255])  # Borne supérieure pour la teinte rouge
+        lower_red2 = np.array([220, 40, 40])  # Borne inférieure pour la teinte route
+        upper_red2 = np.array([255, 255, 255])  # Borne supérieure pour la teinte rouge
+        return self.count_pixels_in_range(image, lower_red1, upper_red1) + self.count_pixels_in_range(image, lower_red2, upper_red2)
+
     def bluePixelCount(self, image):
-        blueCount = 0
-        # Définir les plages de teinte pour le vert
-        lower_blue = np.array([120, 40, 40])  # Borne inférieure pour la teinte verte
-        upper_blue = np.array([220, 255, 255])  # Borne supérieure pour la teinte verte
-        for i in range(len(image[0])):
-            for j in range(len(image[i])):
-                if(image[i][j][0] > lower_blue[0] and image[i][j][0] < upper_blue[0]):
-                    if(image[i][j][1] > lower_blue[1] and image[i][j][1] < upper_blue[1]):
-                        if(image[i][j][2] > lower_blue[2] and image[i][j][2] < upper_blue[2]):
-                            blueCount = blueCount + 1
-        return (blueCount / IMAGE_SIZE)
+        lower_blue = np.array([110, 40, 40])  # Borne inférieure pour la teinte bleue
+        upper_blue = np.array([130, 255, 255])  # Borne supérieure pour la teinte bleue
+        return self.count_pixels_in_range(image, lower_blue, upper_blue)
     def generateLabHistograms(self, view=False):
         # Calculer la mayenne de canal de couleur pour chaque image
         for i in range(len(self.image_list)):
@@ -219,39 +207,20 @@ class ImageCollection:
     def generateRepresentation(self, indexes):
         # Création de la représentation
         # ajoute les pourcentages de pixel gris, rouge, vert, bleu
-        for i in range(len(self.images_coast)):
-            pixelGr, pixelRed, pixelGreen, pixelBlue = self.applyColorFilter(self.images_coast[i])
-            angleMedian, angleIQR = self.applyEdgeFilter(self.images_coast[i])
 
-            self.representation_coast[i][0] = pixelGr
-            self.representation_coast[i][1] = pixelRed
-            self.representation_coast[i][2] = pixelGreen
-            self.representation_coast[i][3] = pixelBlue
-            self.representation_coast[i][4] = angleMedian
-            self.representation_coast[i][5] = angleIQR
+        for images, representation in self.image_types:
+            for i in range(len(images)):
+                pixelGr, pixelRed, pixelGreen, pixelBlue = self.applyColorFilter(images[i])
+                angleMedian, angleIQR = self.applyEdgeFilter(images[i])
 
-        for i in range(len(self.images_forest)):
-            pixelGr, pixelRed, pixelGreen, pixelBlue = self.applyColorFilter(self.images_forest[i])
-            angleMedian, angleIQR = self.applyEdgeFilter(self.images_forest[i])
+                representation[i][0] = pixelGr
+                representation[i][1] = pixelRed
+                representation[i][2] = pixelGreen
+                representation[i][3] = pixelBlue
+                representation[i][4] = angleMedian
+                representation[i][5] = angleIQR
 
-            self.representation_forest[i][0] = pixelGr
-            self.representation_forest[i][1] = pixelRed
-            self.representation_forest[i][2] = pixelGreen
-            self.representation_forest[i][3] = pixelBlue
-            self.representation_forest[i][4] = angleMedian
-            self.representation_forest[i][5] = angleIQR
-
-        for i in range(len(self.images_street)):
-            pixelGr, pixelRed, pixelGreen, pixelBlue = self.applyColorFilter(self.images_street[i])
-            angleMedian, angleIQR = self.applyEdgeFilter(self.images_street[i])
-
-            self.representation_street[i][0] = pixelGr
-            self.representation_street[i][1] = pixelRed
-            self.representation_street[i][2] = pixelGreen
-            self.representation_street[i][3] = pixelBlue
-            self.representation_street[i][4] = angleMedian
-            self.representation_street[i][5] = angleIQR
-        print("Street done")
+        print("Processing done")
 
     def applyColorFilter(self, image):
 
@@ -286,24 +255,26 @@ class ImageCollection:
     def do_pca_coast(self, representation):
         # Compute average and std of all representation
         # Then compute eighenvalues and eigenvectors
-        for i in representation:
-            self.coast_representation_mean.append(np.mean(i, axis=0))
-            self.coast_representation_std.append(np.std(i, axis=0))
-            cov = np.cov(i.T)
+        self.coast_representation_mean = (np.mean(representation, axis=0))
+        self.coast_representation_std = (np.std(representation, axis=0))
+        self.coast_representation_cov = (np.cov(representation, rowvar=False))
+        self.coast_representation_eigen = (np.linalg.eig(self.coast_representation_cov))
 
     def do_pca_forest(self, representation):
         # Compute average and std of all representation
         # Then compute eighenvalues and eigenvectors
-        for i in representation:
-            self.forest_representation_mean.append(np.mean(representation[i], axis=0))
-            self.forest_representation_std.append(np.std(representation[i], axis=0))
+        self.forest_representation_mean = (np.mean(representation, axis=0))
+        self.forest_representation_std = (np.std(representation, axis=0))
+        self.forest_representation_cov = (np.cov(representation, rowvar=False))
+        self.forest_representation_eigen = (np.linalg.eig(self.forest_representation_cov))
 
     def do_pca_street(self, representation):
         # Compute average and std of all representation
         # Then compute eighenvalues and eigenvectors
-        for i in representation:
-            self.street_representation_mean.append(np.mean(representation[i], axis=0))
-            self.street_representation_std.append(np.std(representation[i], axis=0))
+        self.street_representation_mean = (np.mean(representation, axis=0))
+        self.street_representation_std = (np.std(representation, axis=0))
+        self.street_representation_cov = (np.cov(representation, rowvar=False))
+        self.street_representation_eigen = (np.linalg.eig(self.street_representation_cov))
 
 
     def equalizeHistogram(self, indexes):
@@ -323,19 +294,18 @@ class ImageCollection:
             # im = rgb2gray(image_equalized)
             ax3[i, 2].imshow(im, cmap='gray')
 
+    def gaussian_kernel(self, sigma):
+        size = int(3 * sigma) * 2 + 1
+        kernel_radius = size // 2
+        kernel = np.exp(-np.arange(-kernel_radius, kernel_radius + 1) ** 2 / (2 * sigma ** 2))
+        kernel /= np.sum(kernel)
+        return kernel
+
     def gaussian_blur(self, image_array, sigma=1):
-        # Définir le noyau du filtre gaussien
-        kernel_size = 2 * int(3 * sigma) + 1
-        gaussian_kernel = np.zeros((kernel_size, kernel_size))
-        for i in range(kernel_size):
-            for j in range(kernel_size):
-                gaussian_kernel[i, j] = np.exp(-((i - kernel_size // 2) ** 2 + (j - kernel_size // 2) ** 2) / (2 * sigma ** 2))
-        gaussian_kernel /= np.sum(gaussian_kernel)
-
-        # Appliquer le filtre de convolution avec le noyau gaussien
-        filtered_image = convolve2d(image_array, gaussian_kernel, mode='same', boundary='wrap')
-
-        return filtered_image
+        kernel = self.gaussian_kernel(sigma)
+        blurred_image = convolve2d(image_array, kernel[:, np.newaxis] * kernel[np.newaxis, :], mode='same',
+                                   boundary='wrap')
+        return blurred_image
 
     # Effectuer un filtre de laplace sur une image
     # Permet de détecter les contours
