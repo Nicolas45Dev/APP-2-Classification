@@ -37,11 +37,14 @@ def problematique_APP2():
         # images.do_pca_street(representation_street)
 
     # Bayes Classifier
-    if False:
+    if True:
         # Bayes Classifier
-        bayes1 = classifiers.BayesClassify_APP2(data2train=all_representations, data2test=all_representations,
-                                                experiment_title='Bayes',
-                                                gen_output=True, view=True)
+        apriori = [1 / 3, 1 / 3, 1 / 3]
+        cost = [[0, 1, 1], [1, 0, 1], [1, 1, 0]]
+        bg1 = classifiers.BayesClassify_APP2(data2train=all_representations, data2test=all_representations,
+                                             apriori=apriori, costs=cost,
+                                             experiment_title='probabilités gaussiennes',
+                                             gen_output=True, view=False)
     # PPV Classifier
     if False:
         ppv1 = classifiers.PPVClassify_APP2(data2train=all_representations, n_neighbors=1,
@@ -54,7 +57,7 @@ def problematique_APP2():
                                                useKmean=True, n_representants=7,
                                                gen_output=True, view=True)
     # ML Classification
-    if True:
+    if False:
         # Exemple de RN
         n_neurons = 6
         n_layers = 2
