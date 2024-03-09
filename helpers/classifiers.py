@@ -151,24 +151,28 @@ class BayesClassifier:
             self.densities.append(probabilitydensityType(data2trainLists[i]))
 
     def predict(self, testdata1array, expected_labels1array=None, gen_output=False):
-        """
-        testdata1array: correspond au format où toutes les données sont dans 1 seule liste peu importe la classe,
-            voir ClassificationData()
-        """
         testDataNSamples, testDataDimensions = np.asarray(testdata1array).shape
         assert testDataDimensions == self.representationDimensions
         classProbDensities = []
+
         # calcule la valeur de la probabilité d'appartenance à chaque classe pour les données à tester
-        for i in range(self.n_classes):  # itère sur toutes les classes
-            classProbDensities.append(self.densities[i].computeProbability(testdata1array))
-        # reshape pour que les lignes soient les calculs pour 1 point original, i.e. même disposition que l'array d'entrée
+        for i in range(self.n_classes):
+            classProbDensity = self.densities[i].computeProbability(testdata1array)
+            # Ajustement pour l'apriori
+            classProbDensity *= self.apriori[i]
+            classProbDensities.append(classProbDensity)
+
+        # reshape pour que les lignes soient les calculs pour 1 point original
         classProbDensities = np.array(classProbDensities).T
-        # TODO problematique: take apriori and cost into consideration! here for risk computation argmax assumes equal costs and apriori
+
+        # calcul de la prédiction en tenant compte de l'apriori et du coût
         predictions = np.argmax(classProbDensities, axis=1).reshape(testDataNSamples, 1)
+
         if np.asarray(expected_labels1array).any():
             errors_indexes = an.calc_erreur_classification(expected_labels1array, predictions, gen_output)
         else:
             errors_indexes = np.asarray([])
+
         return predictions, errors_indexes
 
 
@@ -184,8 +188,7 @@ class BayesClassify_APP2:
         self.donneesTestRandom = an.genDonneesTest(ndonnees_random, data2train.extent)
         self.predictRandom, _ = self.classifier.predict(self.donneesTestRandom)  # classifie les données de test1
         if np.asarray(data2test).any():   # classifie les données de test2 si présentes
-            self.predictTest, self.error_indexes = \
-                self.classifier.predict(data2test.data1array, data2test.labels1array, gen_output=gen_output)
+            self.predictTest, self.error_indexes = self.classifier.predict(data2test.data1array, data2test.labels1array, gen_output=gen_output)
         else:
             self.predictTest = []
             self.error_indexes = []

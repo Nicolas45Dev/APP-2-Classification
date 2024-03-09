@@ -77,7 +77,7 @@ def labo_APP2():
         bg1 = classifiers.BayesClassify_APP2(data2train=data3classes, data2test=data3classes,
                                              apriori=apriori, costs=cost,
                                              experiment_title='probabilités gaussiennes',
-                                             gen_output=True, view=True)
+                                             gen_output=True, view=False)
 
     if False:
         # L2.E1

@@ -39,10 +39,11 @@ import random
 
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split as ttsplit
+import plotly
+import plotly.graph_objs as go
 
 
 class Extent:
-    # TODO Problématique ou JB, generalize to N-D
     """
     classe pour contenir les min et max de données 2D
     membres: xmin, xmax, ymin, ymax
@@ -52,7 +53,7 @@ class Extent:
         get_array: retourne les min max formattés en array
         get_corners: retourne les coordonnées des points aux coins d'un range couvert par les min max
     """
-    def __init__(self, ptList=None):
+    def __init__(self, *args, ptList=None):
         """
         Constructeur
         2 options:
@@ -72,6 +73,8 @@ class Extent:
             limits[:, 0] = np.floor(limits[:, 0])
             limits[:, 1] = np.ceil(limits[:, 1])
             self.limits = limits
+        else:
+            self.limits = args
 
     def get_array(self):
         """
@@ -440,56 +443,40 @@ def view_classes(data, extent, border_coeffs=None):
 def view_classification_results(experiment_title, extent, original_data, colors_original, title_original,
                                 test1data, colors_test1, title_test1, test1errors=None, test2data=None,
                                 test2errors=None, colors_test2=None, title_test2=''):
-    """
-    Génère 1 graphique avec 3 subplots:
-        1. Des données "d'origine" train_data avec leur étiquette encodée dans la couleur c1
-        2. Un aperçu de frontière de décision au moyen d'un vecteur de données aléatoires test1 avec leur étiquette
-            encodée dans la couleur c2
-        3. D'autres données classées test2 (opt) avec affichage encodée dans la couleur c3
-    :param original_data:
-    :param test1data:
-    :param test2data:
-        données à afficher
-    :param colors_original:
-    :param colors_test1:
-    :param colors_test2:
-        couleurs
-        c1, c2 et c3 sont traités comme des index dans un colormap
-    :param experiment_title:
-    :param title_original:
-    :param title_test1:
-    :param title_test2:
-        titres de la figure et des subplots
-    :param extent:
-        range des données
-    :return:
-    """
     cmap = cm.get_cmap('seismic')
-    if np.asarray(test2data).any():
-        fig, (ax1, ax2, ax3) = plt.subplots(3, 1)
-        if np.asarray(test2errors).any():
-            colors_test2[test2errors] = error_class
-        ax3.scatter(test2data[:, 0], test2data[:, 1], s=5, c=cmap(colors_test2))
-        ax3.set_title(title_test2)
-        ax3.set_xlim([extent.limits[0,0], extent.limits[0,1]])
-        ax3.set_ylim([extent.limits[1,0], extent.limits[1,0]])
-        ax3.axes.set_aspect('equal')
-    else:
-        fig, (ax1, ax2) = plt.subplots(2, 1)
-    fig.suptitle(experiment_title)
-    ax1.scatter(original_data[:, 0], original_data[:, 1], s=5, c=colors_original, cmap='viridis')
-    if np.asarray(test1errors).any():
-        colors_test1[test1errors] = error_class
-    ax2.scatter(test1data[:, 0], test1data[:, 1], s=5, c=colors_test1, cmap='viridis')
-    ax1.set_title(title_original)
-    ax2.set_title(title_test1)
-    ax1.set_xlim([extent.limits[0,0], extent.limits[0,1]])
-    ax1.set_ylim([extent.limits[1,0], extent.limits[1,1]])
-    ax2.set_xlim([extent.limits[0,0], extent.limits[0,1]])
-    ax2.set_ylim([extent.limits[1,0], extent.limits[1,1]])
-    ax1.axes.set_aspect('equal')
-    ax2.axes.set_aspect('equal')
+    n_dimensions = original_data.shape[1]
 
+    if test2data is not None:
+        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(8, 10))
+    else:
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 8))
+
+    fig.suptitle(experiment_title)
+
+    # Plot original data
+    for d in range(n_dimensions - 1):  # Only plot the first two dimensions
+        ax1.scatter(original_data[:, d], original_data[:, d + 1], s=5, c=colors_original, cmap='viridis')
+        ax1.set_title(title_original)
+        ax1.set_xlabel(f'Dimension {d}')
+        ax1.set_ylabel(f'Dimension {d + 1}')
+
+    # Plot test data 1
+    for d in range(n_dimensions - 1):  # Only plot the first two dimensions
+        ax2.scatter(test1data[:, d], test1data[:, d + 1], s=5, c=colors_test1, cmap='viridis')
+        ax2.set_title(title_test1)
+        ax2.set_xlabel(f'Dimension {d}')
+        ax2.set_ylabel(f'Dimension {d + 1}')
+
+    if test2data is not None:
+        # Plot test data 2
+        for d in range(n_dimensions - 1):  # Only plot the first two dimensions
+            ax3.scatter(test2data[:, d], test2data[:, d + 1], s=5, c=colors_test2, cmap='viridis')
+            ax3.set_title(title_test2)
+            ax3.set_xlabel(f'Dimension {d}')
+            ax3.set_ylabel(f'Dimension {d + 1}')
+
+    plt.tight_layout()
+    plt.show()
 
 def equalizeHist(image, num_bins=256):
     image_hist, bins = np.histogram(image.flatten(), num_bins, density=True)
