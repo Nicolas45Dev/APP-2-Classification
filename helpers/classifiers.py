@@ -446,20 +446,20 @@ class NNClassifier:
 class NNClassify_APP2:
     def __init__(self, data2train, data2test, n_layers, n_neurons, innerActivation='tanh', outputActivation='softmax',
                  optimizer=Adam(), loss='binary_crossentropy', metrics=None,
-                 callback_list=None, n_epochs=1000, savename='', ndonnees_random=5000,
+                 callback_list=None, n_epochs=1000, savename='', ndonnees_random=5000, train=0.8,
                  experiment_title='NN Classifier', gen_output=False, view=False):
 
         print('\n\n=========================\nNouveau classificateur: '+experiment_title)
         self.classifier = NNClassifier()
-        self.classifier.preprocess_training_data(dataLists=data2train.dataLists, labelsLists=data2train.labelsLists)
+        self.classifier.preprocess_training_data(dataLists=data2train.dataLists, labelsLists=data2train.labelsLists,train_fraction=train)
         self.classifier.init_model(n_neurons, n_layers, innerActivation=innerActivation,
                                    outputActivation=outputActivation, gen_output=gen_output,
                                    optimizer=optimizer, loss=loss, metrics=metrics)
         self.classifier.train_model(n_epochs, callback_list=callback_list, savename=savename, view=view)
         self.donneesTestRandom = an.genDonneesTest(ndonnees_random, data2train.extent)
         self.predictRandom, _ = self.classifier.predict(testdata1array=self.donneesTestRandom)
-        self.predictTest, self.error_indexes = self.classifier.predict(testdata1array=data2test.data1array,
-                                                                       expected_labels1array=data2test.labels1array,
+        self.predictTest, self.error_indexes = self.classifier.predict(testdata1array=data2test['data'],
+                                                                       expected_labels1array=data2test['label'],
                                                                        gen_output=gen_output)
         # if view:
         #     an.view_classification_results(original_data=data2train.data1array, test1data=self.donneesTestRandom,
