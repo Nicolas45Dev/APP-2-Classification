@@ -34,7 +34,7 @@ def problematique_APP2():
         all_representations = ClassificationData()
 
     # Bayes Classifier
-    if True:
+    if False:
         # Bayes Classifier
         apriori = [1 / 3, 1 / 3, 1 / 3]
         cost = [[0, 1, 1], [1, 0, 1], [1, 1, 0]]
@@ -54,7 +54,7 @@ def problematique_APP2():
                                                useKmean=True, n_representants=7,
                                                gen_output=True, view=True)
     # ML Classification
-    if False:
+    if True:
         # Exemple de RN
         n_neurons = 6
         n_layers = 2

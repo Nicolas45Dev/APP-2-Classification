@@ -464,16 +464,16 @@ class NNClassify_APP2:
         self.predictTest, self.error_indexes = self.classifier.predict(testdata1array=data2test['data'],
                                                                        expected_labels1array=data2test['label'],
                                                                        gen_output=gen_output)
-        # if view:
-        #     an.view_classification_results(original_data=data2train.data1array, test1data=self.donneesTestRandom,
-        #                                    test2data=data2test.data1array,
-        #                                    test2errors=self.error_indexes,
-        #                                    colors_original=data2train.labels1array, colors_test1=self.predictRandom,
-        #                                    colors_test2=self.predictTest / an.error_class / 0.75,
-        #                                    experiment_title=experiment_title+f'NN {n_layers} layer(s) caché(s), {n_neurons} neurones par couche',
-        #                                    title_original='Données originales',
-        #                                    title_test1=f'Données aléatoires classées par le RNA',
-        #                                    title_test2='Prédiction du RNA, données originales', extent=data2train.extent)
+        if view:
+            an.view_classification_results(original_data=data2train.data1array, test1data=self.donneesTestRandom,
+                                           test2data=data2test['data'],
+                                           test2errors=self.error_indexes,
+                                           colors_original=data2train.labels1array, colors_test1=self.predictRandom,
+                                           colors_test2=self.predictTest / an.error_class / 0.75,
+                                           experiment_title=experiment_title+f'NN {n_layers} layer(s) caché(s), {n_neurons} neurones par couche',
+                                           title_original='Données originales',
+                                           title_test1=f'Données aléatoires classées par le RNA',
+                                           title_test2='Prédiction du RNA, données originales', extent=data2train.extent)
 
 
 def get_gaussian_borders(dataLists):
