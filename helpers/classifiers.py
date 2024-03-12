@@ -470,8 +470,7 @@ class NNClassify_APP2:
                                            colors_original=data2train.labels1array, colors_test1=self.predictTest / an.error_class / 0.75,
                                            experiment_title=experiment_title+f'NN {n_layers} layer(s) caché(s), {n_neurons} neurones par couche',
                                            title_original='Données originales',
-                                           title_test1=f'Données aléatoires classées par le RNA',
-                                           title_test2='Prédiction du RNA, données originales', extent=data2train.extent)
+                                           title_test1='Prédiction du RNA, données originales', extent=data2train.extent)
 
 
 def get_gaussian_borders(dataLists):

@@ -444,10 +444,8 @@ def view_classification_results(experiment_title, extent, original_data, colors_
     cmap = cm.get_cmap('seismic')
     n_dimensions = original_data.shape[1]
 
-    if test2data is not None:
-        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(8, 10))
-    else:
-        fig, (ax1, ax2,ax3) = plt.subplots(3, 1, figsize=(8, 8))
+
+    fig, (ax1, ax2,ax3) = plt.subplots(3, 1, figsize=(8, 8))
 
     fig.suptitle(experiment_title)
 
@@ -468,7 +466,29 @@ def view_classification_results(experiment_title, extent, original_data, colors_
     ax3.set_xlabel(f'Dimension {4}')
     ax3.set_ylabel(f'Dimension {5}')
     ax3.legend(*scatter3.legend_elements(), title='Colors')
+    plt.tight_layout()
+    plt.show()
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(8, 8))
 
+    scatter1 = ax1.scatter(test1data[:, 0], test1data[:, 1], s=5, c=colors_test1, cmap='viridis')
+    ax1.set_title(title_test1)
+    ax1.set_xlabel(f'Dimension {0}')
+    ax1.set_ylabel(f'Dimension {1}')
+    ax1.legend(*scatter1.legend_elements(), title='Colors')
+
+    scatter2 = ax2.scatter(test1data[:, 2], test1data[:, 3], s=5, c=colors_test1, cmap='viridis')
+    ax2.set_title(title_test1)
+    ax2.set_xlabel(f'Dimension {2}')
+    ax2.set_ylabel(f'Dimension {3}')
+    ax2.legend(*scatter2.legend_elements(), title='Colors')
+
+    scatter3 = ax3.scatter(test1data[:, 4], test1data[:, 5], s=5, c=colors_test1, cmap='viridis')
+    ax3.set_title(title_test1)
+    ax3.set_xlabel(f'Dimension {4}')
+    ax3.set_ylabel(f'Dimension {5}')
+    ax3.legend(*scatter3.legend_elements(), title='Colors')
+    plt.tight_layout()
+    plt.show()
     # Plot original data
     # for d in range(n_dimensions - 1):  # Only plot the first two dimensions
     #     ax1.scatter(original_data[:, d], original_data[:, d + 1], s=5, c=colors_original, cmap='viridis')
@@ -484,15 +504,27 @@ def view_classification_results(experiment_title, extent, original_data, colors_
     #     ax2.set_ylabel(f'Dimension {d + 1}')
 
     if test2data is not None:
-        # Plot test data 2
-        for d in range(n_dimensions - 1):  # Only plot the first two dimensions
-            ax3.scatter(test2data[:, d], test2data[:, d + 1], s=5, c=colors_test2, cmap='viridis')
-            ax3.set_title(title_test2)
-            ax3.set_xlabel(f'Dimension {d}')
-            ax3.set_ylabel(f'Dimension {d + 1}')
+        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(8, 8))
 
-    plt.tight_layout()
-    plt.show()
+        scatter1 = ax1.scatter(test2data[:, 0], test2data[:, 1], s=5, c=colors_test2, cmap='viridis')
+        ax1.set_title(title_test1)
+        ax1.set_xlabel(f'Dimension {0}')
+        ax1.set_ylabel(f'Dimension {1}')
+        ax1.legend(*scatter1.legend_elements(), title='Colors')
+
+        scatter2 = ax2.scatter(test2data[:, 2], test2data[:, 3], s=5, c=colors_test2, cmap='viridis')
+        ax2.set_title(title_test2)
+        ax2.set_xlabel(f'Dimension {2}')
+        ax2.set_ylabel(f'Dimension {3}')
+        ax2.legend(*scatter2.legend_elements(), title='Colors')
+
+        scatter3 = ax3.scatter(test2data[:, 4], test2data[:, 5], s=5, c=colors_test2, cmap='viridis')
+        ax3.set_title(title_test2)
+        ax3.set_xlabel(f'Dimension {4}')
+        ax3.set_ylabel(f'Dimension {5}')
+        ax3.legend(*scatter3.legend_elements(), title='Colors')
+        plt.tight_layout()
+        plt.show()
 
 def equalizeHist(image, num_bins=256):
     image_hist, bins = np.histogram(image.flatten(), num_bins, density=True)
