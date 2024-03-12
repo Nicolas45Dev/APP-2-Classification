@@ -14,6 +14,58 @@ from sklearn.model_selection import train_test_split as ttsplit
 from helpers.ClassificationData import ClassificationData
 
 #######################################
+def showRepresentation():
+    axisName = ['gris', 'rouge', 'vert', 'bleu', 'angle median', 'angle iqr']
+    nb_dimension = 6
+
+    coast = np.load("representation_coast.npy")[:275]
+    forest = np.load("representation_forest.npy")[:275]
+    street = np.load("representation_street.npy")[:275]
+
+    for a in range(nb_dimension):
+        for b in range(a + 1, nb_dimension):
+            for c in range(b + 1, nb_dimension):
+
+                fig = plt.figure()
+                ax = fig.add_subplot(projection='3d')
+                ax.set_title(axisName[a] + ' + ' + axisName[b] + ' + ' + axisName[c])
+                ax.set_xlabel(axisName[a])
+                ax.set_ylabel(axisName[b])
+                ax.set_zlabel(axisName[c])
+
+
+                # Coast
+                ax.scatter(coast[:,a], coast[:,b], coast[:,c], c='b', label='coast')
+
+                # Forest
+                ax.scatter(forest[:, a], forest[:, b], forest[:, c], c='g', label='forest')
+
+                # Street
+                ax.scatter(street[:, a], street[:, b], street[:, c], c='r', label='street')
+
+                ax.legend()
+                ax.set_xlim([0, 1])
+                ax.set_ylim([0, 1])
+    plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def problematique_APP2():
     images = ImageCollection(load_all=True)
     dataToTreat = []
@@ -30,7 +82,7 @@ def problematique_APP2():
         # representation_coast = np.load("representation_coast.npy")
         # representation_forest = np.load("representation_forest.npy")
         # representation_street = np.load("representation_street.npy")
-
+        showRepresentation()
         all_representations = ClassificationData()
         # images.do_pca_coast(representation_coast)
         # images.do_pca_forest(representation_forest)
@@ -49,7 +101,7 @@ def problematique_APP2():
         ppv1km1 = classifiers.PPVClassify_APP2(data2train=all_representations, data2test=all_representations, n_neighbors=1,
                                                experiment_title='1-PPV sur le 1-moy',
                                                useKmean=True, n_representants=7,
-                                               gen_output=True, view=True)
+                                               gen_output=True, view=False)
     # ML Classification
     if False:
         # Exemple de RN

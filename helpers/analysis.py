@@ -467,56 +467,50 @@ def view_classification_results(experiment_title, extent, original_data, colors_
         range des données
     :return:
     """
+
+    axisName = ['gris', 'rouge', 'vert', 'bleu', 'angle median', 'angle iqr']
+    axisColor = ['g', 'r', 'g', 'b', 'j', 'j']
+
+
+
+
     cmap = cm.get_cmap('seismic')
-    if np.asarray(test2data).any():
-        fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1)
-        if np.asarray(test2errors).any():
-            colors_test2[test2errors] = error_class
-        ax4.scatter(test2data[:, 0], test2data[:, 1], s=5, c=cmap(colors_test2))
-        ax4.set_title(title_test2)
-        ax4.set_xlim([extent.min[0], extent.max[0]])
-        ax4.set_ylim([extent.min[0], extent.max[0]])
-        ax4.axes.set_aspect('equal')
-    else:
-        fig, (ax1, ax2, ax3) = plt.subplots(3, 1)
 
-    fig.suptitle(experiment_title)
+    #if np.asarray(test2data).any():
+    #    fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1)
+    #    if np.asarray(test2errors).any():
+    #        colors_test2[test2errors] = error_class
+    #    ax4.scatter(test2data[:, 0], test2data[:, 1], s=5, c=cmap(colors_test2))
+    #    ax4.set_title(title_test2)
+    #    ax4.set_xlim([extent.min[0], extent.max[0]])
+    #    ax4.set_ylim([extent.min[0], extent.max[0]])
+    #    ax4.axes.set_aspect('equal')
+    #else:
+    #    fig, (ax1, ax2, ax3) = plt.subplots(3, 1)
 
-    a = original_data[:, 0]
-    b = original_data[:, 1]
-    c = original_data[:, 2]
+    nb_dimension = len(original_data[0])
 
-    ax = fig.add_subplot(311, projection='3d')
-    ax.scatter(a, b, c)
+    fig, axs = plt.subplots(nb_dimension, nb_dimension)
 
-    d = original_data[:, 3]
-    e = original_data[:, 4]
-    f = original_data[:, 5]
-
-    ax = fig.add_subplot(312, projection='3d')
-    ax.scatter(d, e, f)
-
-
-    if np.asarray(test1errors).any():
-        colors_test1[test1errors] = error_class
-    ax3.scatter(test1data[:, 0], test1data[:, 1], s=5, c=colors_test1, cmap='viridis')
-
-    ax1.set_title(title_original)
-    ax2.set_title(title_test1)
-
-    ax1.set_xlim([extent.min[0], extent.max[0]])
-    ax1.set_ylim([extent.min[1], extent.max[1]])
-    #ax1.set_zlim([extent.min[2], extent.max[2]])
+    for a in range(nb_dimension):
+        for b in range(a, nb_dimension):
+            if a is not b :
+                axs[a, b].scatter(original_data[:, a], original_data[:, b], c=[axisColor[a], axisColor[b]])
+                axs[a, b].set_xlabel(axisName[a])
+                axs[a, b].set_ylabel(axisName[b])
+                axs[a, b].set_xlim([0, 1])
+                axs[a, b].set_ylim([0, 1])
+                #axs[a, b].set_xlim([extent.min[a], extent.max[a]])
+                #axs[a, b].set_ylim([extent.min[b], extent.max[b]])
+                axs[a, b].set_title(axisName[a] + ' + ' + axisName[b])
+                axs[a, b].axes.set_aspect('equal')
 
 
-    ax2.set_xlim([extent.min[3], extent.max[3]])
-    ax2.set_ylim([extent.min[4], extent.max[4]])
-    #ax2.set_zlim([extent.min[5], extent.max[5]])
 
+    #if np.asarray(test1errors).any():
+    #    colors_test1[test1errors] = error_class
+    #ax3.scatter(test1data[:, 0], test1data[:, 1], s=5, c=colors_test1, cmap='viridis')
 
-    ax1.axes.set_aspect('equal')
-    ax2.axes.set_aspect('equal')
-    ax3.axes.set_aspect('equal')
 
 
 

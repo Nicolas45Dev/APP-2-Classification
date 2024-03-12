@@ -237,6 +237,8 @@ class PPVClassify_APP2:
     def __init__(self, data2train, data2test=None, n_neighbors=1, metric='minkowski', ndonnees_random=5000,
                  useKmean=False, n_representants=1,
                  experiment_title='PPV Classifier', gen_output=False, view=False):
+
+
         print('\n\n=========================\nNouveau classificateur: '+experiment_title)
         self.classifier = PPVClassifier(data2train, n_neighbors=n_neighbors, metric=metric,
                                         useKmean=useKmean, n_represantants=n_representants, experiment_title=experiment_title,
