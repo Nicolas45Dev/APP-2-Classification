@@ -64,7 +64,7 @@ def problematique_APP2():
         # suivi d'un 1-PPV avec ces nouveaux représentants de classes
         ppv1km1 = classifiers.PPVClassify_APP2(data2train=all_representations, data2test=all_representations, n_neighbors=1,
                                                experiment_title='1-PPV sur le 1-moy',
-                                               useKmean=True, n_representants=6,
+                                               useKmean=True, n_representants=9,
                                                gen_output=True, view=True)
     # ML Classification
     if False:
