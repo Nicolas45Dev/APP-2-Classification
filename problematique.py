@@ -5,6 +5,7 @@ Problématique APP2 Module IA S8
 
 import matplotlib.pyplot as plt
 import numpy as np
+from mpl_toolkits.mplot3d import Axes3D
 
 from helpers.ImageCollection import ImageCollection
 from helpers import classifiers
@@ -19,6 +20,14 @@ def problematique_APP2():
     dataToTreat = []
     # Génère une liste de N images, les visualise et affiche leur histo de couleur
     if True:
+        # images = ImageCollection(load_all=True)
+        #images.generateRepresentation([])
+
+        #np.save("representation_coast.npy", images.representation_coast)
+        #np.save("representation_forest.npy", images.representation_forest)
+        #np.save("representation_street.npy", images.representation_street)
+
+
         all_representations = ClassificationData()
 
     # Bayes Classifier
@@ -57,7 +66,7 @@ def problematique_APP2():
                                           n_epochs=1000, savename='problematic_APP2',
                                           ndonnees_random=5000, gen_output=True, view=True)
 
-    plt.show()
+    #plt.show()
 
 ######################################
 if __name__ == '__main__':

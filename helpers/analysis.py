@@ -437,40 +437,7 @@ def view_classes(data, extent, border_coeffs=None):
 def view_classification_results(experiment_title, extent, original_data, colors_original, title_original,
                                 test1data, colors_test1, title_test1, test1errors=None, test2data=None,
                                 test2errors=None, colors_test2=None, title_test2=''):
-    cmap = cm.get_cmap('seismic')
-    n_dimensions = original_data.shape[1]
-
-    if test2data is not None:
-        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(8, 10))
-    else:
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 8))
-
-    fig.suptitle(experiment_title)
-
-    # Plot original data
-    for d in range(n_dimensions - 1):  # Only plot the first two dimensions
-        ax1.scatter(original_data[:, d], original_data[:, d + 1], s=5, c=colors_original, cmap='viridis')
-        ax1.set_title(title_original)
-        ax1.set_xlabel(f'Dimension {d}')
-        ax1.set_ylabel(f'Dimension {d + 1}')
-
-    # Plot test data 1
-    for d in range(n_dimensions - 1):  # Only plot the first two dimensions
-        ax2.scatter(test1data[:, d], test1data[:, d + 1], s=5, c=colors_test1, cmap='viridis')
-        ax2.set_title(title_test1)
-        ax2.set_xlabel(f'Dimension {d}')
-        ax2.set_ylabel(f'Dimension {d + 1}')
-
-    if test2data is not None:
-        # Plot test data 2
-        for d in range(n_dimensions - 1):  # Only plot the first two dimensions
-            ax3.scatter(test2data[:, d], test2data[:, d + 1], s=5, c=colors_test2, cmap='viridis')
-            ax3.set_title(title_test2)
-            ax3.set_xlabel(f'Dimension {d}')
-            ax3.set_ylabel(f'Dimension {d + 1}')
-
-    plt.tight_layout()
-    plt.show()
+    return None
 
 def equalizeHist(image, num_bins=256):
     image_hist, bins = np.histogram(image.flatten(), num_bins, density=True)
