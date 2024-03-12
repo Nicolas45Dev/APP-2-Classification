@@ -56,7 +56,7 @@ def problematique_APP2():
     # ML Classification
     if True:
         # Exemple de RN
-        n_neurons = 6
+        n_neurons = 7
         n_layers = 2
         # Classification NN
         #get 20% of the data for testing in random
