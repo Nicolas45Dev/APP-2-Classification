@@ -463,6 +463,20 @@ def view_classification_results(experiment_title, extent, original_data, colors_
         ax.scatter(test1data[test1errors, 0], test1data[test1errors, 1], test1data[test1errors, 2], c='r', marker='o')
         ax.set_title('Erreurs de classification')
 
+    # Affiche les données de test 1 en 3d
+    if test2data is not None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.scatter(test2data[:, 0], test2data[:, 1], test2data[:, 2], c=colors_test2, marker='o')
+        ax.set_title(title_test2)
+
+    # Affiche les erreurs de classification
+    if test2errors is not None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.scatter(test2data[test2errors, 0], test2data[test2errors, 1], test2data[test2errors, 2], c='r', marker='o')
+        ax.set_title('Erreurs de classification')
+
 def equalizeHist(image, num_bins=256):
     image_hist, bins = np.histogram(image.flatten(), num_bins, density=True)
     cdf = image_hist.cumsum()

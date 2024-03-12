@@ -18,19 +18,18 @@ def problematique_APP2():
     images = ImageCollection(load_all=True)
     dataToTreat = []
     # Génère une liste de N images, les visualise et affiche leur histo de couleur
+
+    if False:
+        images.generateRepresentation([])
+        np.save("representation_coast.npy", images.representation_coast)
+        np.save("representation_forest.npy", images.representation_forest)
+        np.save("representation_street.npy", images.representation_street)
+
+
     if True:
-        # images = ImageCollection(load_all=True)
-        #images.generateRepresentation([])
-
-        #np.save("representation_coast.npy", images.representation_coast)
-        #np.save("representation_forest.npy", images.representation_forest)
-        #np.save("representation_street.npy", images.representation_street)
-
         data_coast = np.load("representation_coast.npy")
         data_forest = np.load("representation_forest.npy")
         data_street = np.load("representation_street.npy")
-
-        data_all = np.concatenate((data_coast, data_forest, data_street), axis=0)
 
         # visualisation des donnée en 3D
         fig = plt.figure()
@@ -46,10 +45,10 @@ def problematique_APP2():
         ax.set_zlabel('Line V')
         # plt.show()
 
-        all_representations = ClassificationData()
+    all_representations = ClassificationData()
 
     # Bayes Classifier
-    if True:
+    if False:
         # Bayes Classifier
         apriori = [0.3673, 0.3347, 0.298]
         cost = [[0, 1, 1], [1, 0, 1], [1, 1, 0]]
@@ -59,13 +58,76 @@ def problematique_APP2():
                                              gen_output=True, view=True)
     # PPV Classifier
     if True:
-        # ppv1 = classifiers.PPVClassify_APP2(data2train=all_representations, n_neighbors=1, experiment_title='1-PPV avec données orig comme représentants', gen_output=True, view=True)
-        # 1-mean sur chacune des classes
-        # suivi d'un 1-PPV avec ces nouveaux représentants de classes
-        ppv1km1 = classifiers.PPVClassify_APP2(data2train=all_representations, data2test=all_representations, n_neighbors=1,
-                                               experiment_title='1-PPV sur le 1-moy',
-                                               useKmean=True, n_representants=9,
-                                               gen_output=True, view=True)
+        data_coast = np.load("representation_coast.npy")
+        data_forest = np.load("representation_forest.npy")
+        data_street = np.load("representation_street.npy")
+
+        start = 0
+        stop = 200
+
+        temp = []
+        temp.append(data_coast[start:stop])
+        temp.append(data_forest[start:stop])
+        temp.append(data_street[start:stop])
+        traning_data = ClassificationData(temp)
+
+        start = 201
+        stop = 292
+
+        temp = []
+        temp.append(data_coast[start:stop])
+        temp.append(data_forest[start:stop])
+        temp.append(data_street[start:stop])
+        test_data = ClassificationData(temp)
+
+        # PPV
+        if True:
+            nb_representants = 1
+
+            # Tests
+            if False:
+                # 2n = 5.47945205479452 %
+                # 3n = 5.821917808219178 %
+                # 4n = 6.392694063926941 %
+
+                # 8n = 7.6923076923076925 %
+
+                for nb_neighbors in range(1, 30):
+                    classifiers.PPVClassify_APP2(data2train=traning_data, data2test=test_data, n_neighbors=nb_neighbors,
+                                                 experiment_title='PPV + (' + str(nb_representants) + ')representants + (' + str(nb_neighbors) + ')neighbors',
+                                                 useKmean=False, n_representants=nb_representants,
+                                                 gen_output=True, view=True)
+            # Run
+            if True:
+                nb_neighbors = 8
+                classifiers.PPVClassify_APP2(data2train=traning_data, data2test=test_data, n_neighbors=nb_neighbors,
+                                             experiment_title='PPV + (' + str(nb_representants) + ')representants + (' + str(nb_neighbors) + ')neighbors',
+                                             useKmean=False, n_representants=nb_representants,
+                                             gen_output=True, view=True)
+
+        # PPV with kmean
+        if False:
+            # 9r 1n = 9%
+            # 12r 1n = 8.9%
+
+            nb_neighbors = 1
+
+            # Test
+            if False:
+                for nb_representants in range(1, 30):
+                    classifiers.PPVClassify_APP2(data2train=traning_data, data2test=test_data, n_neighbors=nb_neighbors,
+                                                 experiment_title='PPV + KMEAN + (' + str(nb_representants) + ')representants + (' + str(nb_neighbors) + ')neighbors',
+                                                 useKmean=True, n_representants=nb_representants,
+                                                 gen_output=True, view=True)
+
+            # Run
+            if True:
+                nb_representants = 10
+                classifiers.PPVClassify_APP2(data2train=traning_data, data2test=test_data, n_neighbors=nb_neighbors,
+                                             experiment_title='PPV + KMEAN + (' + str(nb_representants) + ')representants + (' + str(nb_neighbors) + ')neighbors',
+                                             useKmean=True, n_representants=nb_representants,
+                                             gen_output=True, view=True)
+
     # ML Classification
     if True:
         # Exemple de RN
@@ -87,7 +149,8 @@ def problematique_APP2():
                                           n_epochs=1000, savename='problematic_APP2',
                                           ndonnees_random=1000, train=0.7, gen_output=True, view=True)
 
-    plt.show()
+    if True:
+        plt.show()
 
 ######################################
 if __name__ == '__main__':
