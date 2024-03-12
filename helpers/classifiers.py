@@ -169,8 +169,13 @@ class BayesClassifier:
         # reshape pour que les lignes soient les calculs pour 1 point original
         classProbDensities = np.array(classProbDensities).T
 
-        # calcul de la prédiction en tenant compte de l'apriori et du coût
-        predictions = np.argmax(classProbDensities, axis=1).reshape(testDataNSamples, 1)
+        classProbWithCost = np.dot(classProbDensities, self.costs)
+
+        predictions = np.argmax(classProbWithCost, axis=1)
+        predictions = predictions.reshape(testDataNSamples, 1)
+
+        # appliqué la matrice cost sur les predictions
+
 
         if np.asarray(expected_labels1array).any():
             errors_indexes = an.calc_erreur_classification(expected_labels1array, predictions, gen_output)

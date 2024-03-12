@@ -32,4 +32,4 @@ Le classificateur de Bayes peut prendre en compte les apriori et des coûts pour
 Le classificateur PPV demande seulement un nombre de voisins pour effectuer la classification. Les valeurs pour le nombre de voisins doit être un entier positif.
 
 ## Classificateur Réseaux de neuronnes
-Le classificateur de réseaux de neuronnes demande un nombre de couches et un nombre de neurones par couche. Les valeurs pour le nombre de couches cachées doit être un entier positif. Les valeurs pour le nombre de neurones par couche doit être un entier positif.
+Le classificateur de réseaux de neuronnes demande un nombre de couches et un nombre de neurones par couche. Les valeurs pour le nombre de couches cachées doit être un entier positif. Les valeurs pour le nombre de neurones par couche doit être un entier positif. De plus, il est nécessaire de spécifier le nombre d'itérations, le taux d'apprentissage et le type d'activation. Les valeurs pour le nombre d'itérations doit être un entier positif. Les valeurs pour le taux d'apprentissage doit être un float positif entre 0 et 1. Les valeurs pour le type d'activation doit être un string avec les valeurs: 'tanh', 'relu' ou 'sigmoid'.

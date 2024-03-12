@@ -158,8 +158,8 @@ class ImageCollection:
         return self.count_pixels_in_range(image, lower_gray, upper_gray)
 
     def greenPixelCount(self, image):
-        lower_green = np.array([42, 40, 40])  # Borne inférieure pour la teinte verte
-        upper_green = np.array([120, 255, 255])  # Borne supérieure pour la teinte verte
+        lower_green = np.array([42, 40, 40])
+        upper_green = np.array([120, 255, 255])
         return self.count_pixels_in_range(image, lower_green, upper_green)
 
     def redPixelCount(self, image):
@@ -249,24 +249,6 @@ class ImageCollection:
                 im = skiio.imread(self.image_folder + os.sep + self.image_list[indexes[i]])
             ax2[i].imshow(im)
 
-
-    def equalizeHistogram(self, indexes):
-        if type(indexes) == int:
-            indexes = [indexes]
-
-        fig3 = plt.figure()
-        ax3 = fig3.subplots(len(indexes), 2)
-        for i in range(len(indexes)):
-            if self.all_images_loaded:
-                im = self.images[indexes[i]]
-            else:
-                im = skiio.imread(self.image_folder + os.sep + self.image_list[indexes[i]])
-            ax3[i, 0].imshow(im)
-            image_equalized, _ = an.equalizeHist(im)
-            ax3[i, 1].imshow(image_equalized)
-            # im = rgb2gray(image_equalized)
-            ax3[i, 2].imshow(im, cmap='gray')
-
     def gaussian_kernel(self, sigma):
         size = int(3 * sigma) * 2 + 1
         kernel_radius = size // 2
@@ -276,14 +258,8 @@ class ImageCollection:
 
     def gaussian_blur(self, image_array, sigma=1):
         kernel = self.gaussian_kernel(sigma)
-        blurred_image = convolve2d(image_array, kernel[:, np.newaxis] * kernel[np.newaxis, :], mode='same',
-                                   boundary='wrap')
+        blurred_image = convolve2d(image_array, kernel[:, np.newaxis] * kernel[np.newaxis, :], mode='same', boundary='wrap')
         return blurred_image
-
-    def get_hue_average(self, image):
-        image_hsv = skic.rgb2hsv(image)
-        hue = image_hsv[:, :, 0]
-        return np.mean(hue)
 
     def sobel_edge_detection(self, image_array):
         # Normaliser les valeurs de l'image résultante à [0, 255]
@@ -306,47 +282,27 @@ class ImageCollection:
                 np.max(gradient_magnitude) - np.min(gradient_magnitude)) * 255
         return gradient_magnitude
 
-    # Effectuer un filtre de laplace sur une image
-    # Permet de détecter les contours
-    def laplace_operator(self, image_array):
-        # Normaliser les valeurs de l'image résultante à [0, 255]
-        norm_image = (image_array - np.min(image_array)) / (
-                np.max(image_array) - np.min(image_array)) * 255
-        # Définir le noyau de l'opérateur de Laplace
-        laplace_kernel = np.array([[0, 1, 0],
-                                   [1, -4, 1],
-                                   [0, 1, 0]])
-        filtered_image = convolve2d(norm_image, laplace_kernel, mode='same', boundary='symm')
-        #normalisez la réponse laplace
-        filtered_image = (filtered_image - np.min(filtered_image)) / (
-                np.max(filtered_image) - np.min(filtered_image)) * 255
-        return filtered_image
     def applyEdgeFilter(self, image):
-        # ax5[i, 0].imshow(im)
         image_equalized, _ = an.equalizeHist(image)
-        # change image_equalized to uint8
-        # ax5[i, 1].imshow(image_equalized)
+
         # convert to grayscale
         grayImage = rgb2gray(image_equalized)
-        # ax5[i, 2].imshow(im, cmap='gray')
         filter_results = self.gaussian_blur(grayImage, sigma=3)
+
         # Show the result of the gaussian blur
         sobel = self.sobel_edge_detection(filter_results)
-        #filter_results = self.laplace_operator(filter_results)
-
-        # Affiche l'image originale, l'image égalisée et l'image en niveaux de gris
 
         # Trouver les lignes prevalentes
         return self.find_lines(sobel)
 
     def find_lines(self, image_laplace):
+
         # Appliquer la détection de contours de Canny sur l'image de Laplace
         edges = canny(image_laplace, sigma=1.5, low_threshold=0.2, high_threshold=5)
         # Trouver les pics dans la transformée de Hough
         lines = probabilistic_hough_line(edges, threshold=4, line_length=12, line_gap=3)
 
         # defined array
-        angleArray = []
         lineArray = []
         horixontal_line = []
         vertical_line = []
@@ -359,16 +315,9 @@ class ImageCollection:
             # Si l'angle se trouve entre 15 et 345 degrés, on considère la ligne comme horizontale
             if (5 > angle or angle > 355) or (175 > angle > 185):
                 horixontal_line.append(line)
-            # Si l'angle se trouve entre 80 et 100 degrés ou 260 et 280 degré, on considère la ligne comme verticale
+            # Si l'angle se trouve entre 80 et 100 degrés ou 260 et 280 degrées, on considère la ligne comme verticale
             elif (85 < angle < 95) or (265 < angle < 275):
                 vertical_line.append(line)
-            angleArray.append(np.degrees(angle_rad) % 360)
-
-        angleMedian = np.median(angleArray)
-        angleIQR = np.percentile(angleArray, 75) - np.percentile(angleArray, 25)
-        # Normalisation des angles entre 0 et 1
-        angleMedian = angleMedian / 360
-        angleIQR = angleIQR / 360
 
         if len(lineArray) > self.max_lines:
             self.max_lines = len(lineArray)

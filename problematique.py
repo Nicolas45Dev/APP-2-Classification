@@ -30,10 +30,12 @@ def problematique_APP2():
         np.save("representation_street.npy", images.representation_street)
 
 
-    if True:
+    if False:
         data_coast = np.load("representation_coast.npy")
         data_forest = np.load("representation_forest.npy")
         data_street = np.load("representation_street.npy")
+
+        # all_data = np.concatenate((data_coast, data_forest, data_street), axis=0)
 
         # visualisation des donnée en 3D
         fig = plt.figure()
@@ -55,14 +57,15 @@ def problematique_APP2():
     if False:
         # Bayes Classifier
         apriori = [0.3673, 0.3347, 0.298]
-        cost = [[0, 1, 1], [1, 0, 1], [1, 1, 0]]
+        cost = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+        print(cost)
         bg1 = classifiers.BayesClassify_APP2(data2train=all_representations, data2test=all_representations,
                                              apriori=apriori, costs=cost,
                                              experiment_title='probabilités gaussiennes',
                                              gen_output=True, view=True)
 
     # PPV Classifier
-    if True:
+    if False:
         data_coast = np.load("representation_coast.npy")
         data_forest = np.load("representation_forest.npy")
         data_street = np.load("representation_street.npy")
@@ -86,7 +89,7 @@ def problematique_APP2():
         test_data = ClassificationData(temp)
 
         # PPV
-        if True:
+        if False:
             nb_representants = 1
 
             # Tests
@@ -101,7 +104,7 @@ def problematique_APP2():
                     classifiers.PPVClassify_APP2(data2train=traning_data, data2test=test_data, n_neighbors=nb_neighbors,
                                                  experiment_title=str(nb_representants) + ';' + str(nb_neighbors),
                                                  useKmean=False, n_representants=nb_representants,
-                                                 gen_output=True, view=False)
+                                                 gen_output=False, view=False)
 
             # Run
             if True:
