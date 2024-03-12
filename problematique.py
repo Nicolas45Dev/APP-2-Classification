@@ -67,25 +67,25 @@ def problematique_APP2():
                                                useKmean=True, n_representants=9,
                                                gen_output=True, view=True)
     # ML Classification
-    if False:
+    if True:
         # Exemple de RN
-        n_neurons = 3
-        n_layers = 4
+        n_neurons = 6
+        n_layers = 2
         # Classification NN
         # get 20% of the data for testing in random
         train_data, test_data, train_labels, test_labels = ttsplit(all_representations.data1array,
-                                                                   all_representations.labels1array, test_size=0.2,
+                                                                   all_representations.labels1array, test_size=.99,
                                                                    random_state=1)
         data_test = {'data': test_data, 'label': test_labels}
         nn1 = classifiers.NNClassify_APP2(data2train=all_representations, data2test=data_test,
                                           n_layers=n_layers, n_neurons=n_neurons, innerActivation='sigmoid',
-                                          outputActivation='softmax', optimizer=Adam(learning_rate=0.2),
-                                          loss='mse',
+                                          outputActivation='softmax', optimizer=Adam(learning_rate=0.15),
+                                          loss='mae',
                                           metrics=['accuracy'],
                                           callback_list=[],
                                           experiment_title='NN Simple',
                                           n_epochs=1000, savename='problematic_APP2',
-                                          ndonnees_random=1000, train=0.8, gen_output=True, view=True)
+                                          ndonnees_random=1000, train=0.7, gen_output=True, view=True)
 
     plt.show()
 
