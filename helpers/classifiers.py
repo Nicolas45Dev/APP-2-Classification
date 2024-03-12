@@ -485,8 +485,8 @@ class NNClassify_APP2:
                                            colors_test1=self.predictRandom,
                                            experiment_title=experiment_title + f'NN {n_layers} layer(s) caché(s), {n_neurons} neurones par couche',
                                            title_original='Données originales',
-                                           title_test1='Données d\'origine reclassées',
-                                           title_test2='Données aléatoires classifiés', extent=data2train.extent)
+                                           title_test2='Données d\'origine reclassées',
+                                           title_test1='Données aléatoires classifiés', extent=data2train.extent)
 
 
 def get_gaussian_borders(dataLists):
