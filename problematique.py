@@ -5,6 +5,10 @@ Problématique APP2 Module IA S8
 
 import matplotlib.pyplot as plt
 import numpy as np
+
+from helpers.ImageCollection import ImageCollection
+from helpers import classifiers
+from helpers.ClassificationData import ClassificationData
 from keras.optimizers import Adam
 from sklearn.model_selection import train_test_split as ttsplit
 
@@ -48,7 +52,7 @@ def problematique_APP2():
     all_representations = ClassificationData()
 
     # Bayes Classifier
-    if True:
+    if False:
         # Bayes Classifier
         apriori = [0.3673, 0.3347, 0.298]
         cost = [[0, 1, 1], [1, 0, 1], [1, 1, 0]]
@@ -58,7 +62,7 @@ def problematique_APP2():
                                              gen_output=True, view=True)
 
     # PPV Classifier
-    if False:
+    if True:
         data_coast = np.load("representation_coast.npy")
         data_forest = np.load("representation_forest.npy")
         data_street = np.load("representation_street.npy")
@@ -97,7 +101,7 @@ def problematique_APP2():
                     classifiers.PPVClassify_APP2(data2train=traning_data, data2test=test_data, n_neighbors=nb_neighbors,
                                                  experiment_title=str(nb_representants) + ';' + str(nb_neighbors),
                                                  useKmean=False, n_representants=nb_representants,
-                                                 gen_output=False, view=False)
+                                                 gen_output=True, view=False)
 
             # Run
             if True:
