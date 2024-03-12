@@ -29,19 +29,17 @@ Fonctions :
     descaleData: dénormalise des données selon un min max (utile pour dénormaliser une sortie prédite)
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.patches import Ellipse
-from matplotlib import cm
 import itertools
 import math
 import random
 
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib import cm
+from matplotlib.patches import Ellipse
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split as ttsplit
-import plotly
-import plotly.graph_objs as go
-
+import helpers.analysis as an
 
 class Extent:
     """
@@ -53,6 +51,7 @@ class Extent:
         get_array: retourne les min max formattés en array
         get_corners: retourne les coordonnées des points aux coins d'un range couvert par les min max
     """
+
     def __init__(self, *args, ptList=None):
         """
         Constructeur
@@ -61,8 +60,8 @@ class Extent:
             passer 1 array qui contient les des points sur lesquels sont calculées les min et max
         """
         if ptList is not None:
-            mins = np.floor(np.min(ptList, axis=0)) - 1
-            maxs = np.ceil(np.max(ptList, axis=0)) + 1
+            mins = np.floor(np.min(ptList, axis=0))
+            maxs = np.ceil(np.max(ptList, axis=0))
             self.limits = [(mins[i], maxs[i]) for i in range(len(mins))]
         else:
             self.limits = args
@@ -89,7 +88,8 @@ def calc_erreur_classification(original_data, classified_data, gen_output=False)
     vect_err = np.absolute(original_data - classified_data).astype(bool)
     indexes = np.array(np.where(vect_err))[0]
     if gen_output:
-        print(f'\n\n{len(indexes)} erreurs de classification sur {len(original_data)} données (= {len(indexes)/len(original_data)*100} %)')
+        print(
+            f'\n\n{len(indexes)} erreurs de classification sur {len(original_data)} données (= {len(indexes) / len(original_data) * 100} %)')
         print('Confusion:\n')
         print(confusion_matrix(original_data, classified_data))
     return indexes
@@ -128,7 +128,7 @@ def creer_hist2D(data, title='', nbinx=15, nbiny=15, view=False):
     deltay = (np.max(y) - np.min(y)) / nbiny
 
     # TODO L3.S2.1: remplacer les valeurs bidons par la bonne logique ici
-    hist, xedges, yedges = np.histogram2d([1, 1], [1, 1], bins=[1, 1]) # toutes ces valeurs sont n'importe quoi
+    hist, xedges, yedges = np.histogram2d([1, 1], [1, 1], bins=[1, 1])  # toutes ces valeurs sont n'importe quoi
     # normalise par la somme (somme de densité de prob = 1)
     histsum = np.sum(hist)
     hist = hist / histsum
@@ -262,6 +262,7 @@ def rescaleHistLab(LabImage, n_bins=256):
     Helper function
     La représentation Lab requiert un rescaling avant d'histogrammer parce que ce sont des floats!
     """
+
     # Constantes de la représentation Lab
     class LabCte:  # TODO JB : utiliser an.Extent?
         min_L: int = 0
@@ -440,24 +441,42 @@ def view_classification_results(experiment_title, extent, original_data, colors_
     # Affiche les données originales en 3d
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(original_data[:, 0], original_data[:, 1], original_data[:, 2], c=colors_original, marker='o')
+
+    scatter1 = ax.scatter(original_data[:, 0], original_data[:, 1], original_data[:, 2], c=colors_original,
+                          marker='o')
     ax.set_title(title_original)
-    ax.legend(['Classe 1', 'Classe 2', 'Classe 3'])
+    class_names = {0: 'Coast', 1: 'Forest', 2: 'Street'}
+    color_map = {label: scatter1.cmap(scatter1.norm(label)) for label in np.unique(colors_original)}
+    legend_handles = [
+        plt.Line2D([], [], linestyle='', marker='o', markersize=10, label=class_names[label], color=color_map[label])
+        for label in color_map]
+    ax.legend(handles=legend_handles)
 
     # Affiche les données de test 1 en 3d
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
-    ax.scatter(test1data[:, 0], test1data[:, 1], test1data[:, 2], c=colors_test1, marker='o')
+    scatter2 = ax.scatter(test1data[:, 0], test1data[:, 1], test1data[:, 2], c=colors_test1,
+                          marker='o')
     ax.set_title(title_test1)
-    ax.legend(['Classe 1', 'Classe 2', 'Classe 3'])
+    color_map = {label: scatter2.cmap(scatter2.norm(label)) for label in np.unique(colors_test1)}
+    legend_handles = [
+        plt.Line2D([], [], linestyle='', marker='o', markersize=10, label=class_names[label], color=color_map[label])
+        for label in color_map]
+    ax.legend(handles=legend_handles)
 
     # Affiche les données de test 2 en 3d
     if test2data is not None:
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
-        ax.scatter(test2data[:, 0], test2data[:, 1], test2data[:, 2], c=colors_test2, marker='o')
+        scatter3 = ax.scatter(test2data[:, 0], test2data[:, 1], test2data[:, 2], c=colors_test2,
+                              marker='o')
         ax.set_title(title_test2)
-        ax.legend(['Classe 1', 'Classe 2', 'Classe 3'])
+        color_map = {label: scatter3.cmap(scatter3.norm(label)) for label in np.unique(colors_test2)}
+        legend_handles = [
+            plt.Line2D([], [], linestyle='', marker='o', markersize=10, label=class_names[label * an.error_class * 0.75],
+                       color=color_map[label])
+            for label in color_map]
+        ax.legend(handles=legend_handles)
 
     # Affiche les erreurs de classification
     if test1errors is not None:
@@ -465,6 +484,7 @@ def view_classification_results(experiment_title, extent, original_data, colors_
         ax = fig.add_subplot(111, projection='3d')
         ax.scatter(test1data[test1errors, 0], test1data[test1errors, 1], test1data[test1errors, 2], c='r', marker='o')
         ax.set_title('Erreurs de classification')
+
 
 def equalizeHist(image, num_bins=256):
     image_hist, bins = np.histogram(image.flatten(), num_bins, density=True)
@@ -500,7 +520,7 @@ def viewEllipse(data, ax, scale=1, facecolor='none', edgecolor='red', **kwargs):
     height = 2 * np.sqrt(lambdas[1]) * scale
     angle = np.degrees(np.arctan2(*vectors[:, 0][::-1]))
 
-    ellipse = Ellipse((moy[0], moy[1]), width= width, height= height,
+    ellipse = Ellipse((moy[0], moy[1]), width=width, height=height,
                       angle=angle, facecolor=facecolor,
                       edgecolor=edgecolor, linewidth=2, **kwargs)
     return ax.add_patch(ellipse)

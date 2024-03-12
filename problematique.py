@@ -5,14 +5,17 @@ Problématique APP2 Module IA S8
 
 import matplotlib.pyplot as plt
 import numpy as np
-import random
 
 from helpers.ImageCollection import ImageCollection
 from helpers import classifiers
 from helpers.ClassificationData import ClassificationData
 from keras.optimizers import Adam
 from sklearn.model_selection import train_test_split as ttsplit
+
+from helpers import classifiers
 from helpers.ClassificationData import ClassificationData
+from helpers.ImageCollection import ImageCollection
+
 
 #######################################
 def problematique_APP2():
@@ -27,7 +30,7 @@ def problematique_APP2():
         np.save("representation_street.npy", images.representation_street)
 
 
-    if False:
+    if True:
         data_coast = np.load("representation_coast.npy")
         data_forest = np.load("representation_forest.npy")
         data_street = np.load("representation_street.npy")
@@ -75,6 +78,7 @@ def problematique_APP2():
 
         start = 201
         stop = 292
+
         temp = []
         temp.append(data_coast[start:stop])
         temp.append(data_forest[start:stop])
@@ -103,7 +107,9 @@ def problematique_APP2():
             if True:
                 nb_neighbors = 8
                 classifiers.PPVClassify_APP2(data2train=traning_data, data2test=test_data, n_neighbors=nb_neighbors,
-                                             experiment_title='PPV + (' + str(nb_representants) + ')representants + (' + str(nb_neighbors) + ')neighbors',
+                                             experiment_title='PPV + (' + str(
+                                                 nb_representants) + ')representants + (' + str(
+                                                 nb_neighbors) + ')neighbors',
                                              useKmean=False, n_representants=nb_representants,
                                              gen_output=True, view=True)
 
@@ -126,7 +132,9 @@ def problematique_APP2():
                 nb_representants = 14
                 nb_neighbors = 1
                 classifiers.PPVClassify_APP2(data2train=traning_data, data2test=test_data, n_neighbors=nb_neighbors,
-                                             experiment_title='PPV + KMEAN + (' + str(nb_representants) + ')representants + (' + str(nb_neighbors) + ')neighbors',
+                                             experiment_title='PPV + KMEAN + (' + str(
+                                                 nb_representants) + ')representants + (' + str(
+                                                 nb_neighbors) + ')neighbors',
                                              useKmean=True, n_representants=nb_representants,
                                              gen_output=True, view=True)
 
@@ -135,24 +143,20 @@ def problematique_APP2():
         # Exemple de RN
         n_neurons = 6
         n_layers = 2
-        # Classification NN
-        # get 20% of the data for testing in random
-        train_data, test_data, train_labels, test_labels = ttsplit(all_representations.data1array,
-                                                                   all_representations.labels1array, test_size=.99,
-                                                                   random_state=1)
-        data_test = {'data': test_data, 'label': test_labels}
-        nn1 = classifiers.NNClassify_APP2(data2train=all_representations, data2test=data_test,
-                                          n_layers=n_layers, n_neurons=n_neurons, innerActivation='sigmoid',
-                                          outputActivation='softmax', optimizer=Adam(learning_rate=0.15),
-                                          loss='mae',
-                                          metrics=['accuracy'],
-                                          callback_list=[],
-                                          experiment_title='NN Simple',
-                                          n_epochs=1000, savename='problematic_APP2',
-                                          ndonnees_random=1000, train=0.7, gen_output=True, view=True)
+        # Classification NNS
+        classifiers.NNClassify_APP2(data2train=all_representations, data2test=all_representations,
+                                    n_layers=n_layers, n_neurons=n_neurons, innerActivation='sigmoid',
+                                    outputActivation='softmax', optimizer=Adam(learning_rate=0.15),
+                                    loss='mae',
+                                    metrics=['accuracy'],
+                                    callback_list=[],
+                                    experiment_title='NN Simple',
+                                    n_epochs=1000, savename='problematic_APP2',
+                                    ndonnees_random=5000, train=0.7, gen_output=True, view=True)
 
     if True:
         plt.show()
+
 
 ######################################
 if __name__ == '__main__':
