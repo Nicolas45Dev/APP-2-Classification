@@ -447,23 +447,41 @@ def view_classification_results(experiment_title, extent, original_data, colors_
     if test2data is not None:
         fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(8, 10))
     else:
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 8))
+        fig, (ax1, ax2,ax3) = plt.subplots(3, 1, figsize=(8, 8))
 
     fig.suptitle(experiment_title)
 
-    # Plot original data
-    for d in range(n_dimensions - 1):  # Only plot the first two dimensions
-        ax1.scatter(original_data[:, d], original_data[:, d + 1], s=5, c=colors_original, cmap='viridis')
-        ax1.set_title(title_original)
-        ax1.set_xlabel(f'Dimension {d}')
-        ax1.set_ylabel(f'Dimension {d + 1}')
+    scatter1 = ax1.scatter(original_data[:, 0], original_data[:, 1], s=5, c=colors_original, cmap='viridis')
+    ax1.set_title(title_original)
+    ax1.set_xlabel(f'Dimension {0}')
+    ax1.set_ylabel(f'Dimension {1}')
+    ax1.legend(*scatter1.legend_elements(), title='Colors')
 
-    # Plot test data 1
-    for d in range(n_dimensions - 1):  # Only plot the first two dimensions
-        ax2.scatter(test1data[:, d], test1data[:, d + 1], s=5, c=colors_test1, cmap='viridis')
-        ax2.set_title(title_test1)
-        ax2.set_xlabel(f'Dimension {d}')
-        ax2.set_ylabel(f'Dimension {d + 1}')
+    scatter2 = ax2.scatter(original_data[:, 2], original_data[:, 3], s=5, c=colors_original, cmap='viridis')
+    ax2.set_title(title_original)
+    ax2.set_xlabel(f'Dimension {2}')
+    ax2.set_ylabel(f'Dimension {3}')
+    ax2.legend(*scatter2.legend_elements(), title='Colors')
+
+    scatter3 = ax3.scatter(original_data[:, 4], original_data[:, 5], s=5, c=colors_original, cmap='viridis')
+    ax3.set_title(title_original)
+    ax3.set_xlabel(f'Dimension {4}')
+    ax3.set_ylabel(f'Dimension {5}')
+    ax3.legend(*scatter3.legend_elements(), title='Colors')
+
+    # Plot original data
+    # for d in range(n_dimensions - 1):  # Only plot the first two dimensions
+    #     ax1.scatter(original_data[:, d], original_data[:, d + 1], s=5, c=colors_original, cmap='viridis')
+    #     ax1.set_title(title_original)
+    #     ax1.set_xlabel(f'Dimension {d}')
+    #     ax1.set_ylabel(f'Dimension {d + 1}')
+    #
+    # # Plot test data 1
+    # for d in range(n_dimensions - 1):  # Only plot the first two dimensions
+    #     ax2.scatter(test1data[:, d], test1data[:, d + 1], s=5, c=colors_test1, cmap='viridis')
+    #     ax2.set_title(title_test1)
+    #     ax2.set_xlabel(f'Dimension {d}')
+    #     ax2.set_ylabel(f'Dimension {d + 1}')
 
     if test2data is not None:
         # Plot test data 2
