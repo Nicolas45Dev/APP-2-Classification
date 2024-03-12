@@ -64,6 +64,9 @@ class ImageCollection:
         self.images_forest = []
         self.images_street = []
 
+        self.max_lines = 0
+        self.max_vertical_lines = 0
+
 
         # Crée un array qui contient toutes les images
         # Dimensions [980, 256, 256, 3]
@@ -205,6 +208,15 @@ class ImageCollection:
                 representation[i][2] = line_v
                 # representation[i][3] = ikea
 
+        # Normalisation des représentations pour les lignes
+        self.representation_coast[:, 1] = self.representation_coast[:, 1] / self.max_lines
+        self.representation_forest[:, 1] = self.representation_forest[:, 1] / self.max_lines
+        self.representation_street[:, 1] = self.representation_street[:, 1] / self.max_lines
+
+        self.representation_coast[:, 2] = self.representation_coast[:, 2] / self.max_vertical_lines
+        self.representation_forest[:, 2] = self.representation_forest[:, 2] / self.max_vertical_lines
+        self.representation_street[:, 2] = self.representation_street[:, 2] / self.max_vertical_lines
+
         print("Processing done")
 
     def applyColorFilter(self, image):
@@ -216,7 +228,7 @@ class ImageCollection:
         # pixel_pourcentage_blue = self.bluePixelCount(imHSV)
         # pixel_pourcentage_red = self.redPixelCount(imHSV)
 
-        return pixel_pourcentage_gray #, pixel_pourcentage_red, pixel_pourcentage_green, pixel_pourcentage_blue
+        return pixel_pourcentage_gray
 
     def images_display(self, indexes):
         """
@@ -321,61 +333,17 @@ class ImageCollection:
         # Show the result of the gaussian blur
         sobel = self.sobel_edge_detection(filter_results)
         #filter_results = self.laplace_operator(filter_results)
-        # ax5[i, 3].imshow(filter_results, cmap='gray')
+
+        # Affiche l'image originale, l'image égalisée et l'image en niveaux de gris
+
         # Trouver les lignes prevalentes
         return self.find_lines(sobel)
-
-    def calculate_vanishing_point(self, lines):
-        # Collecter les coordonnées des points d'intersection de toutes les paires de lignes
-        intersections = []
-        for i in range(len(lines)):
-            for j in range(i + 1, len(lines)):
-                line1 = lines[i]
-                line2 = lines[j]
-                intersection = self.find_intersection(line1, line2)
-                if intersection is not None:
-                    intersections.append(intersection)
-
-        # Calculer la moyenne des coordonnées des points d'intersection
-        if intersections:
-            vanishing_point = np.mean(intersections, axis=0)
-            # Check if the vanishing point is within the image
-            if 0 < vanishing_point[0] < 256 and 0 < vanishing_point[1] < 256:
-                return vanishing_point
-            return None
-        else:
-            return None
-
-    def find_intersection(self, line1, line2):
-        # Extraire les coordonnées des points de chaque ligne
-        x1 = line1[0][0]
-        y1 = line1[0][1]
-        x2 = line1[1][0]
-        y2 = line1[1][1]
-
-        x3 = line2[0][0]
-        y3 = line2[0][1]
-        x4 = line2[1][0]
-        y4 = line2[1][1]
-
-        # Calculer les coordonnées du point d'intersection
-        denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
-
-        if denominator == 0:
-            return None  # Les lignes sont parallèles
-
-        intersection_x = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / denominator
-        intersection_y = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / denominator
-
-        return intersection_x, intersection_y
 
     def find_lines(self, image_laplace):
         # Appliquer la détection de contours de Canny sur l'image de Laplace
         edges = canny(image_laplace, sigma=1.5, low_threshold=0.2, high_threshold=5)
         # Trouver les pics dans la transformée de Hough
         lines = probabilistic_hough_line(edges, threshold=4, line_length=12, line_gap=3)
-
-        # points = self.calculate_vanishing_point(lines)
 
         # defined array
         angleArray = []
@@ -396,32 +364,19 @@ class ImageCollection:
                 vertical_line.append(line)
             angleArray.append(np.degrees(angle_rad) % 360)
 
-        # ratio_line = len(horixontal_line) / len(lineArray)
-        # angleMedian = np.median(angleArray)
-        # angleIQR = np.percentile(angleArray, 75) - np.percentile(angleArray, 25)
-        # # Normalisation des angles entre 0 et 1
-        # angleMedian = angleMedian / 360
-        # angleIQR = angleIQR / 360
+        angleMedian = np.median(angleArray)
+        angleIQR = np.percentile(angleArray, 75) - np.percentile(angleArray, 25)
+        # Normalisation des angles entre 0 et 1
+        angleMedian = angleMedian / 360
+        angleIQR = angleIQR / 360
+
+        if len(lineArray) > self.max_lines:
+            self.max_lines = len(lineArray)
+
+        if len(vertical_line) > self.max_vertical_lines:
+            self.max_vertical_lines = len(vertical_line)
+
         return len(lineArray) - (len(horixontal_line) + len(vertical_line)), len(vertical_line)
-
-    def applyFilterUnsharp(self, indexes):
-        if type(indexes) == int:
-            indexes = [indexes]
-
-        fig4 = plt.figure()
-        ax4 = fig4.subplots(len(indexes), 3)
-        for i in range(len(indexes)):
-            if self.all_images_loaded:
-                im = self.images[indexes[i]]
-            else:
-                im = skiio.imread(self.image_folder + os.sep + self.image_list[indexes[i]])
-            ax4[i, 0].imshow(im)
-            # convert to grayscale
-            im = rgb2gray(im)
-            ax4[i, 1].imshow(im, cmap='gray')
-            filter_results = filters.unsharp_mask(im, radius=5, amount=2.0)
-            ax4[i, 2].imshow(filter_results)
-
 
     def generateAllHistograms(self, indexes):
         if type(indexes) == int:
