@@ -196,13 +196,14 @@ class ImageCollection:
             for i in range(len(images)):
                 if i % 100 == 0:
                     print(f"Processing image {i} of {len(images)}")
-                hue_average = self.get_hue_average(images[i])
+                gray = self.applyColorFilter(images[i])
+                # hue_average = self.get_hue_average(images[i])
                 line_h, line_v = self.applyEdgeFilter(images[i])
 
-                representation[i][0] = hue_average
+                representation[i][0] = gray
                 representation[i][1] = line_h
                 representation[i][2] = line_v
-                #representation[i][3] = ikea
+                # representation[i][3] = ikea
 
         print("Processing done")
 
@@ -211,11 +212,11 @@ class ImageCollection:
         imHSV = skic.rgb2hsv(image)
         imHSV = np.round(imHSV * (256 - 1))
         pixel_pourcentage_gray = self.grayPixelCount(imHSV)
-        pixel_pourcentage_green = self.greenPixelCount(imHSV)
-        pixel_pourcentage_blue = self.bluePixelCount(imHSV)
-        pixel_pourcentage_red = self.redPixelCount(imHSV)
+        # pixel_pourcentage_green = self.greenPixelCount(imHSV)
+        # pixel_pourcentage_blue = self.bluePixelCount(imHSV)
+        # pixel_pourcentage_red = self.redPixelCount(imHSV)
 
-        return pixel_pourcentage_gray, pixel_pourcentage_red, pixel_pourcentage_green, pixel_pourcentage_blue
+        return pixel_pourcentage_gray #, pixel_pourcentage_red, pixel_pourcentage_green, pixel_pourcentage_blue
 
     def images_display(self, indexes):
         """
