@@ -241,6 +241,7 @@ class PPVClassify_APP2:
                  useKmean=False, n_representants=1,
                  experiment_title='PPV Classifier', gen_output=False, view=False):
         print('\n\n=========================\nNouveau classificateur: '+experiment_title)
+
         self.classifier = PPVClassifier(data2train, n_neighbors=n_neighbors, metric=metric,
                                         useKmean=useKmean, n_represantants=n_representants, experiment_title=experiment_title,
                                         view=True)
@@ -252,6 +253,7 @@ class PPVClassify_APP2:
         else:
             self.predictTest = []
             self.error_indexes = []
+
         if view:
             an.view_classification_results(original_data=data2train.data1array, test1data=self.donneesTestRandom,
                                        test2data=data2test.data1array
