@@ -464,6 +464,13 @@ def view_classification_results(experiment_title, extent, original_data, colors_
         for label in color_map]
     ax.legend(handles=legend_handles)
 
+    # Affiche les erreurs de classification
+    if test1errors is not None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.scatter(test1data[test1errors, 0], test1data[test1errors, 1], test1data[test1errors, 2], c='r', marker='o')
+        ax.set_title('Erreurs de classification')
+
     # Affiche les données de test 2 en 3d
     if test2data is not None:
         fig = plt.figure()
@@ -478,13 +485,11 @@ def view_classification_results(experiment_title, extent, original_data, colors_
             for label in color_map]
         ax.legend(handles=legend_handles)
 
-    # Affiche les erreurs de classification
-    if test1errors is not None:
+    if test2errors is not None:
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
-        ax.scatter(test1data[test1errors, 0], test1data[test1errors, 1], test1data[test1errors, 2], c='r', marker='o')
-        ax.set_title('Erreurs de classification')
-
+        ax.scatter(test2data[test2errors, 0], test2data[test2errors, 1], test2data[test2errors, 2], c='r', marker='o')
+        ax.set_title('Erreurs pour test 2')
 
 def equalizeHist(image, num_bins=256):
     image_hist, bins = np.histogram(image.flatten(), num_bins, density=True)
