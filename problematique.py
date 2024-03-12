@@ -19,10 +19,22 @@ def problematique_APP2():
     dataToTreat = []
     # Génère une liste de N images, les visualise et affiche leur histo de couleur
     if True:
+        # Analyser quelques images pour développer des pistes pour le choix de la représentation
+        # N = 6
+        # im_list = images.get_samples(N)
+
+        # images.generateRepresentation([])
+        # np.save("representation_coast.npy", images.representation_coast)
+        # np.save("representation_forest.npy", images.representation_forest)
+        # np.save("representation_street.npy", images.representation_street)
+        # representation_coast = np.load("representation_coast.npy")
+        # representation_forest = np.load("representation_forest.npy")
+        # representation_street = np.load("representation_street.npy")
+
         all_representations = ClassificationData()
 
     # Bayes Classifier
-    if True:
+    if False:
         # Bayes Classifier
         apriori = [1 / 3, 1 / 3, 1 / 3]
         cost = [[0, 1, 1], [1, 0, 1], [1, 1, 0]]
@@ -42,21 +54,23 @@ def problematique_APP2():
                                                useKmean=True, n_representants=7,
                                                gen_output=True, view=True)
     # ML Classification
-    if False:
+    if True:
         # Exemple de RN
-        n_neurons = 6
+        n_neurons = 7
         n_layers = 2
         # Classification NN
-        nn1 = classifiers.NNClassify_APP2(data2train=all_representations, data2test=all_representations,
+        #get 20% of the data for testing in random
+        train_data, test_data, train_labels, test_labels = ttsplit(all_representations.data1array, all_representations.labels1array, test_size=0.2, random_state=1)
+        data_test = {'data': test_data, 'label': test_labels}
+        nn1 = classifiers.NNClassify_APP2(data2train=all_representations, data2test=data_test,
                                           n_layers=n_layers, n_neurons=n_neurons, innerActivation='sigmoid',
-                                          outputActivation='softmax', optimizer=Adam(learning_rate=0.2),
-                                          loss='binary_crossentropy',
+                                          outputActivation='softmax', optimizer=Adam(learning_rate=0.25),
+                                          loss='mse',
                                           metrics=['accuracy'],
                                           callback_list=[],
                                           experiment_title='NN Simple',
                                           n_epochs=1000, savename='problematic_APP2',
-                                          ndonnees_random=5000, gen_output=True, view=True)
-
+                                          ndonnees_random=1000, train=0.8, gen_output=True, view=True)
     plt.show()
 
 ######################################

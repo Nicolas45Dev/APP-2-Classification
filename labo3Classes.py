@@ -68,7 +68,7 @@ def labo_APP2():
                                                useKmean=True, n_representants=7,
                                                gen_output=True, view=True)
 
-    if True:  # TODO L3.E3
+    if False:  # TODO L3.E3
         # Exemple de classification bayésienne
         apriori = [1/3, 1/3, 1/3]
         cost = [[0, 1, 1], [1, 0, 1], [1, 1, 0]]

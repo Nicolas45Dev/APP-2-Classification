@@ -60,7 +60,7 @@ class ClassificationData:
             self.labelsLists.append(self.labels1array[range(i * len(self.dataLists[i]), (i + 1) * len(self.dataLists[i]))])
 
         # Min et max des données
-        self.extent = an.Extent(ptList=self.data1array)
+        self.extent = an.Extent(self.data1array)
 
         self.m = []
         self.cov = []

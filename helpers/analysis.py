@@ -53,7 +53,7 @@ class Extent:
         get_array: retourne les min max formattés en array
         get_corners: retourne les coordonnées des points aux coins d'un range couvert par les min max
     """
-    def __init__(self, *args, ptList=None):
+    def __init__(self, ptList=None):
         """
         Constructeur
         2 options:
@@ -61,23 +61,31 @@ class Extent:
             passer 1 array qui contient les des points sur lesquels sont calculées les min et max
         """
         if ptList is not None:
-            mins = np.floor(np.min(ptList, axis=0)) - 1
-            maxs = np.ceil(np.max(ptList, axis=0)) + 1
-            self.limits = [(mins[i], maxs[i]) for i in range(len(mins))]
-        else:
-            self.limits = args
+            self.dimensions = len(ptList[0])
+            limits = np.full((self.dimensions, 2), (np.inf, -np.inf))
+
+            for sub_list in ptList:
+                for i, value in enumerate(sub_list):
+                    limits[i, 0] = min(limits[i, 0], value)
+                    limits[i, 1] = max(limits[i, 1], value)
+
+            # Appliquer floor et ceil aux limites
+            limits[:, 0] = np.floor(limits[:, 0])
+            limits[:, 1] = np.ceil(limits[:, 1])
+            self.limits = limits
 
     def get_array(self):
         """
         Accesseur qui retourne sous format matriciel
         """
-        return [[self.xmin, self.xmax], [self.ymin, self.ymax]]
+        return self.limit
 
     def get_corners(self):
         """
         Accesseur qui retourne une liste points qui correspondent aux 4 coins d'un range 2D bornés par les min max
         """
-        return np.array(list(itertools.product([self.xmin, self.xmax], [self.ymin, self.ymax])))
+        return list(itertools.product(*self.limit))
+
 
 
 def calc_erreur_classification(original_data, classified_data, gen_output=False):
@@ -173,19 +181,15 @@ def descaleData(x, minmax):
 
 
 def genDonneesTest(ndonnees, extent):
-    ## Génération de N données aléatoires sur une plage couverte par extent
-    ndim = len(extent.limits)  # Nombre de dimensions de l'espace
+    # génération de n données aléatoires 2D sur une plage couverte par extent
+    # TODO JB: generalize to N-D
+    result = []
+    for _ in range(ndonnees):
+        element = [random.uniform(extent.limits[i,0], extent.limits[i,1]) for i in range(extent.dimensions)]
+        result.append(element)
 
-    # Générer des valeurs aléatoires pour chaque dimension
-    random_data = []
-    for dim_extent in extent.limits:
-        dim_values = (dim_extent[1] - dim_extent[0]) * np.random.random(ndonnees) + dim_extent[0]
-        random_data.append(dim_values)
+    return result
 
-    # Transposer les données pour avoir une structure de tableau correcte
-    random_data = np.array(random_data).T
-
-    return random_data
 
 
 def plot_metrics(NNmodel):
@@ -440,37 +444,87 @@ def view_classification_results(experiment_title, extent, original_data, colors_
     cmap = cm.get_cmap('seismic')
     n_dimensions = original_data.shape[1]
 
-    if test2data is not None:
-        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(8, 10))
-    else:
-        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 8))
+
+    fig, (ax1, ax2,ax3) = plt.subplots(3, 1, figsize=(8, 8))
 
     fig.suptitle(experiment_title)
 
-    # Plot original data
-    for d in range(n_dimensions - 1):  # Only plot the first two dimensions
-        ax1.scatter(original_data[:, d], original_data[:, d + 1], s=5, c=colors_original, cmap='viridis')
-        ax1.set_title(title_original)
-        ax1.set_xlabel(f'Dimension {d}')
-        ax1.set_ylabel(f'Dimension {d + 1}')
+    scatter1 = ax1.scatter(original_data[:, 0], original_data[:, 1], s=5, c=colors_original, cmap='viridis')
+    ax1.set_title(title_original)
+    ax1.set_xlabel(f'Dimension {0}')
+    ax1.set_ylabel(f'Dimension {1}')
+    ax1.legend(*scatter1.legend_elements(), title='Colors')
 
-    # Plot test data 1
-    for d in range(n_dimensions - 1):  # Only plot the first two dimensions
-        ax2.scatter(test1data[:, d], test1data[:, d + 1], s=5, c=colors_test1, cmap='viridis')
-        ax2.set_title(title_test1)
-        ax2.set_xlabel(f'Dimension {d}')
-        ax2.set_ylabel(f'Dimension {d + 1}')
+    scatter2 = ax2.scatter(original_data[:, 2], original_data[:, 3], s=5, c=colors_original, cmap='viridis')
+    ax2.set_title(title_original)
+    ax2.set_xlabel(f'Dimension {2}')
+    ax2.set_ylabel(f'Dimension {3}')
+    ax2.legend(*scatter2.legend_elements(), title='Colors')
 
-    if test2data is not None:
-        # Plot test data 2
-        for d in range(n_dimensions - 1):  # Only plot the first two dimensions
-            ax3.scatter(test2data[:, d], test2data[:, d + 1], s=5, c=colors_test2, cmap='viridis')
-            ax3.set_title(title_test2)
-            ax3.set_xlabel(f'Dimension {d}')
-            ax3.set_ylabel(f'Dimension {d + 1}')
-
+    scatter3 = ax3.scatter(original_data[:, 4], original_data[:, 5], s=5, c=colors_original, cmap='viridis')
+    ax3.set_title(title_original)
+    ax3.set_xlabel(f'Dimension {4}')
+    ax3.set_ylabel(f'Dimension {5}')
+    ax3.legend(*scatter3.legend_elements(), title='Colors')
     plt.tight_layout()
     plt.show()
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(8, 8))
+
+    scatter1 = ax1.scatter(test1data[:, 0], test1data[:, 1], s=5, c=colors_test1, cmap='viridis')
+    ax1.set_title(title_test1)
+    ax1.set_xlabel(f'Dimension {0}')
+    ax1.set_ylabel(f'Dimension {1}')
+    ax1.legend(*scatter1.legend_elements(), title='Colors')
+
+    scatter2 = ax2.scatter(test1data[:, 2], test1data[:, 3], s=5, c=colors_test1, cmap='viridis')
+    ax2.set_title(title_test1)
+    ax2.set_xlabel(f'Dimension {2}')
+    ax2.set_ylabel(f'Dimension {3}')
+    ax2.legend(*scatter2.legend_elements(), title='Colors')
+
+    scatter3 = ax3.scatter(test1data[:, 4], test1data[:, 5], s=5, c=colors_test1, cmap='viridis')
+    ax3.set_title(title_test1)
+    ax3.set_xlabel(f'Dimension {4}')
+    ax3.set_ylabel(f'Dimension {5}')
+    ax3.legend(*scatter3.legend_elements(), title='Colors')
+    plt.tight_layout()
+    plt.show()
+    # Plot original data
+    # for d in range(n_dimensions - 1):  # Only plot the first two dimensions
+    #     ax1.scatter(original_data[:, d], original_data[:, d + 1], s=5, c=colors_original, cmap='viridis')
+    #     ax1.set_title(title_original)
+    #     ax1.set_xlabel(f'Dimension {d}')
+    #     ax1.set_ylabel(f'Dimension {d + 1}')
+    #
+    # # Plot test data 1
+    # for d in range(n_dimensions - 1):  # Only plot the first two dimensions
+    #     ax2.scatter(test1data[:, d], test1data[:, d + 1], s=5, c=colors_test1, cmap='viridis')
+    #     ax2.set_title(title_test1)
+    #     ax2.set_xlabel(f'Dimension {d}')
+    #     ax2.set_ylabel(f'Dimension {d + 1}')
+
+    if test2data is not None:
+        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(8, 8))
+
+        scatter1 = ax1.scatter(test2data[:, 0], test2data[:, 1], s=5, c=colors_test2, cmap='viridis')
+        ax1.set_title(title_test1)
+        ax1.set_xlabel(f'Dimension {0}')
+        ax1.set_ylabel(f'Dimension {1}')
+        ax1.legend(*scatter1.legend_elements(), title='Colors')
+
+        scatter2 = ax2.scatter(test2data[:, 2], test2data[:, 3], s=5, c=colors_test2, cmap='viridis')
+        ax2.set_title(title_test2)
+        ax2.set_xlabel(f'Dimension {2}')
+        ax2.set_ylabel(f'Dimension {3}')
+        ax2.legend(*scatter2.legend_elements(), title='Colors')
+
+        scatter3 = ax3.scatter(test2data[:, 4], test2data[:, 5], s=5, c=colors_test2, cmap='viridis')
+        ax3.set_title(title_test2)
+        ax3.set_xlabel(f'Dimension {4}')
+        ax3.set_ylabel(f'Dimension {5}')
+        ax3.legend(*scatter3.legend_elements(), title='Colors')
+        plt.tight_layout()
+        plt.show()
 
 def equalizeHist(image, num_bins=256):
     image_hist, bins = np.histogram(image.flatten(), num_bins, density=True)
