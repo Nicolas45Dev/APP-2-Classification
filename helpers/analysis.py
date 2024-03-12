@@ -449,6 +449,13 @@ def view_classification_results(experiment_title, extent, original_data, colors_
     ax.scatter(test1data[:, 0], test1data[:, 1], test1data[:, 2], c=colors_test1, marker='o')
     ax.set_title(title_test1)
 
+    # Affiche les data2 en 3d
+    if test2data is not None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.scatter(test2data[:, 0], test2data[:, 1], test2data[:, 2], c=colors_test2, marker='o')
+        ax.set_title(title_test2)
+
     # Affiche les erreurs de classification
     if test1errors is not None:
         fig = plt.figure()
