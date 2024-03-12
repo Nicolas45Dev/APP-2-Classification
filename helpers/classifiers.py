@@ -244,7 +244,7 @@ class PPVClassify_APP2:
 
         self.classifier = PPVClassifier(data2train, n_neighbors=n_neighbors, metric=metric,
                                         useKmean=useKmean, n_represantants=n_representants, experiment_title=experiment_title,
-                                        view=True)
+                                        view=False)
         self.donneesTestRandom = an.genDonneesTest(ndonnees_random, data2train.extent)
         self.predictRandom, _ = self.classifier.predict(self.donneesTestRandom)  # classifie les données de test
         if np.asarray(data2test).any():   # classifie les données de test2 si présentes

@@ -5,6 +5,7 @@ Problématique APP2 Module IA S8
 
 import matplotlib.pyplot as plt
 import numpy as np
+import random
 
 from helpers.ImageCollection import ImageCollection
 from helpers import classifiers
@@ -74,7 +75,6 @@ def problematique_APP2():
 
         start = 201
         stop = 292
-
         temp = []
         temp.append(data_coast[start:stop])
         temp.append(data_forest[start:stop])
@@ -97,7 +97,7 @@ def problematique_APP2():
                     classifiers.PPVClassify_APP2(data2train=traning_data, data2test=test_data, n_neighbors=nb_neighbors,
                                                  experiment_title=str(nb_representants) + ';' + str(nb_neighbors),
                                                  useKmean=False, n_representants=nb_representants,
-                                                 gen_output=False, view=False)
+                                                 gen_output=True, view=False)
 
             # Run
             if True:
