@@ -22,7 +22,6 @@ def problematique_APP2():
     images = ImageCollection(load_all=True)
     dataToTreat = []
     # Génère une liste de N images, les visualise et affiche leur histo de couleur
-<<<<<<< HEAD
 
     if False:
         images.generateRepresentation([])
@@ -53,22 +52,6 @@ def problematique_APP2():
         # plt.show()
 
     all_representations = ClassificationData()
-=======
-    if True:
-        # Analyser quelques images pour développer des pistes pour le choix de la représentation
-        # N = 6
-        # im_list = images.get_samples(N)
-
-        # images.generateRepresentation([])
-        # np.save("representation_coast.npy", images.representation_coast)
-        # np.save("representation_forest.npy", images.representation_forest)
-        # np.save("representation_street.npy", images.representation_street)
-        # representation_coast = np.load("representation_coast.npy")
-        # representation_forest = np.load("representation_forest.npy")
-        # representation_street = np.load("representation_street.npy")
-
-        all_representations = ClassificationData()
->>>>>>> main
 
     # Bayes Classifier
     if False:
@@ -106,7 +89,7 @@ def problematique_APP2():
         test_data = ClassificationData(temp)
 
         # PPV
-        if False:
+        if True:
             nb_representants = 1
 
             # Tests
@@ -159,11 +142,10 @@ def problematique_APP2():
                                              gen_output=True, view=True)
 
     # ML Classification
-    if True:
+    if False:
         # Exemple de RN
         n_neurons = 7
         n_layers = 2
-<<<<<<< HEAD
         # Classification NNS
         classifiers.NNClassify_APP2(data2train=all_representations, data2test=all_representations,
                                     n_layers=n_layers, n_neurons=n_neurons, innerActivation='sigmoid',
@@ -178,7 +160,6 @@ def problematique_APP2():
     if True:
         plt.show()
 
-=======
         # Classification NN
         #get 20% of the data for testing in random
         train_data, test_data, train_labels, test_labels = ttsplit(all_representations.data1array, all_representations.labels1array, test_size=0.2, random_state=1)
@@ -193,7 +174,6 @@ def problematique_APP2():
                                           n_epochs=1000, savename='problematic_APP2',
                                           ndonnees_random=1000, train=0.8, gen_output=True, view=True)
     plt.show()
->>>>>>> main
 
 ######################################
 if __name__ == '__main__':

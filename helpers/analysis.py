@@ -53,19 +53,19 @@ class Extent:
     """
 
 
-def __init__(self, *args, ptList=None):
-    """
-    Constructeur
-    2 options:
-        passer 4 arguments min et max
-        passer 1 array qui contient les des points sur lesquels sont calculées les min et max
-    """
-    if ptList is not None:
-        mins = np.floor(np.min(ptList, axis=0))
-        maxs = np.ceil(np.max(ptList, axis=0))
-        self.limits = [(mins[i], maxs[i]) for i in range(len(mins))]
-    else:
-        self.limits = args
+    def __init__(self, *args, ptList=None):
+        """
+        Constructeur
+        2 options:
+            passer 4 arguments min et max
+            passer 1 array qui contient les des points sur lesquels sont calculées les min et max
+        """
+        if ptList is not None:
+            mins = np.floor(np.min(ptList, axis=0))
+            maxs = np.ceil(np.max(ptList, axis=0))
+            self.limits = [(mins[i], maxs[i]) for i in range(len(mins))]
+        else:
+            self.limits = args
 
     def get_array(self):
         """
@@ -176,13 +176,16 @@ def descaleData(x, minmax):
 
 def genDonneesTest(ndonnees, extent):
     # génération de n données aléatoires 2D sur une plage couverte par extent
-    # TODO JB: generalize to N-D
-    result = []
-    for _ in range(ndonnees):
-        element = [random.uniform(extent.limits[i,0], extent.limits[i,1]) for i in range(extent.dimensions)]
-        result.append(element)
+    ndim = len(extent.limits)
 
-    return result
+    random_data = []
+    for dim_extent in extent.limits:
+        dim_values = (dim_extent[1] - dim_extent[0]) * np.random.rand(ndonnees) + dim_extent[0]
+        random_data.append(dim_values)
+
+    random_data = np.array(random_data).T
+
+    return random_data
 
 
 

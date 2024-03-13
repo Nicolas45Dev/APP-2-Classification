@@ -157,23 +157,6 @@ class ImageCollection:
         upper_gray = np.array([255, 40, 255])  # Borne supérieure pour la teinte grise
         return self.count_pixels_in_range(image, lower_gray, upper_gray)
 
-    def greenPixelCount(self, image):
-        lower_green = np.array([42, 40, 40])
-        upper_green = np.array([120, 255, 255])
-        return self.count_pixels_in_range(image, lower_green, upper_green)
-
-    def redPixelCount(self, image):
-        # Définir les plages de teinte pour le vert
-        lower_red1 = np.array([0, 40, 40])  # Borne inférieure pour la teinte route
-        upper_red1 = np.array([42, 255, 255])  # Borne supérieure pour la teinte rouge
-        lower_red2 = np.array([220, 40, 40])  # Borne inférieure pour la teinte route
-        upper_red2 = np.array([255, 255, 255])  # Borne supérieure pour la teinte rouge
-        return self.count_pixels_in_range(image, lower_red1, upper_red1) + self.count_pixels_in_range(image, lower_red2, upper_red2)
-
-    def bluePixelCount(self, image):
-        lower_blue = np.array([125, 40, 40])  # Borne inférieure pour la teinte bleue
-        upper_blue = np.array([220, 255, 255])  # Borne supérieure pour la teinte bleue
-        return self.count_pixels_in_range(image, lower_blue, upper_blue)
     def generateLabHistograms(self, view=False):
         # Calculer la mayenne de canal de couleur pour chaque image
         for i in range(len(self.image_list)):
