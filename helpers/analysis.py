@@ -52,31 +52,33 @@ class Extent:
         get_corners: retourne les coordonnées des points aux coins d'un range couvert par les min max
     """
 
-    def __init__(self, *args, ptList=None):
-        """
-        Constructeur
-        2 options:
-            passer 4 arguments min et max
-            passer 1 array qui contient les des points sur lesquels sont calculées les min et max
-        """
-        if ptList is not None:
-            mins = np.floor(np.min(ptList, axis=0))
-            maxs = np.ceil(np.max(ptList, axis=0))
-            self.limits = [(mins[i], maxs[i]) for i in range(len(mins))]
-        else:
-            self.limits = args
+
+def __init__(self, *args, ptList=None):
+    """
+    Constructeur
+    2 options:
+        passer 4 arguments min et max
+        passer 1 array qui contient les des points sur lesquels sont calculées les min et max
+    """
+    if ptList is not None:
+        mins = np.floor(np.min(ptList, axis=0))
+        maxs = np.ceil(np.max(ptList, axis=0))
+        self.limits = [(mins[i], maxs[i]) for i in range(len(mins))]
+    else:
+        self.limits = args
 
     def get_array(self):
         """
         Accesseur qui retourne sous format matriciel
         """
-        return [[self.xmin, self.xmax], [self.ymin, self.ymax]]
+        return self.limit
 
     def get_corners(self):
         """
         Accesseur qui retourne une liste points qui correspondent aux 4 coins d'un range 2D bornés par les min max
         """
-        return np.array(list(itertools.product([self.xmin, self.xmax], [self.ymin, self.ymax])))
+        return list(itertools.product(*self.limit))
+
 
 
 def calc_erreur_classification(original_data, classified_data, gen_output=False):
@@ -173,19 +175,15 @@ def descaleData(x, minmax):
 
 
 def genDonneesTest(ndonnees, extent):
-    ## Génération de N données aléatoires sur une plage couverte par extent
-    ndim = len(extent.limits)  # Nombre de dimensions de l'espace
+    # génération de n données aléatoires 2D sur une plage couverte par extent
+    # TODO JB: generalize to N-D
+    result = []
+    for _ in range(ndonnees):
+        element = [random.uniform(extent.limits[i,0], extent.limits[i,1]) for i in range(extent.dimensions)]
+        result.append(element)
 
-    # Générer des valeurs aléatoires pour chaque dimension
-    random_data = []
-    for dim_extent in extent.limits:
-        dim_values = (dim_extent[1] - dim_extent[0]) * np.random.random(ndonnees) + dim_extent[0]
-        random_data.append(dim_values)
+    return result
 
-    # Transposer les données pour avoir une structure de tableau correcte
-    random_data = np.array(random_data).T
-
-    return random_data
 
 
 def plot_metrics(NNmodel):
