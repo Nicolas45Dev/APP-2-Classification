@@ -29,19 +29,17 @@ Fonctions :
     descaleData: dénormalise des données selon un min max (utile pour dénormaliser une sortie prédite)
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.patches import Ellipse
-from matplotlib import cm
 import itertools
 import math
 import random
 
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib import cm
+from matplotlib.patches import Ellipse
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import train_test_split as ttsplit
-import plotly
-import plotly.graph_objs as go
-
+import helpers.analysis as an
 
 class Extent:
     """
@@ -53,26 +51,21 @@ class Extent:
         get_array: retourne les min max formattés en array
         get_corners: retourne les coordonnées des points aux coins d'un range couvert par les min max
     """
-    def __init__(self, ptList=None):
-        """
-        Constructeur
-        2 options:
-            passer 4 arguments min et max
-            passer 1 array qui contient les des points sur lesquels sont calculées les min et max
-        """
-        if ptList is not None:
-            self.dimensions = len(ptList[0])
-            limits = np.full((self.dimensions, 2), (np.inf, -np.inf))
 
-            for sub_list in ptList:
-                for i, value in enumerate(sub_list):
-                    limits[i, 0] = min(limits[i, 0], value)
-                    limits[i, 1] = max(limits[i, 1], value)
 
-            # Appliquer floor et ceil aux limites
-            limits[:, 0] = np.floor(limits[:, 0])
-            limits[:, 1] = np.ceil(limits[:, 1])
-            self.limits = limits
+def __init__(self, *args, ptList=None):
+    """
+    Constructeur
+    2 options:
+        passer 4 arguments min et max
+        passer 1 array qui contient les des points sur lesquels sont calculées les min et max
+    """
+    if ptList is not None:
+        mins = np.floor(np.min(ptList, axis=0))
+        maxs = np.ceil(np.max(ptList, axis=0))
+        self.limits = [(mins[i], maxs[i]) for i in range(len(mins))]
+    else:
+        self.limits = args
 
     def get_array(self):
         """
@@ -97,7 +90,8 @@ def calc_erreur_classification(original_data, classified_data, gen_output=False)
     vect_err = np.absolute(original_data - classified_data).astype(bool)
     indexes = np.array(np.where(vect_err))[0]
     if gen_output:
-        print(f'\n\n{len(indexes)} erreurs de classification sur {len(original_data)} données (= {len(indexes)/len(original_data)*100} %)')
+        print(
+            f'\n\n{len(indexes)} erreurs de classification sur {len(original_data)} données (= {len(indexes) / len(original_data) * 100} %)')
         print('Confusion:\n')
         print(confusion_matrix(original_data, classified_data))
     return indexes
@@ -136,7 +130,7 @@ def creer_hist2D(data, title='', nbinx=15, nbiny=15, view=False):
     deltay = (np.max(y) - np.min(y)) / nbiny
 
     # TODO L3.S2.1: remplacer les valeurs bidons par la bonne logique ici
-    hist, xedges, yedges = np.histogram2d([1, 1], [1, 1], bins=[1, 1]) # toutes ces valeurs sont n'importe quoi
+    hist, xedges, yedges = np.histogram2d([1, 1], [1, 1], bins=[1, 1])  # toutes ces valeurs sont n'importe quoi
     # normalise par la somme (somme de densité de prob = 1)
     histsum = np.sum(hist)
     hist = hist / histsum
@@ -266,6 +260,7 @@ def rescaleHistLab(LabImage, n_bins=256):
     Helper function
     La représentation Lab requiert un rescaling avant d'histogrammer parce que ce sont des floats!
     """
+
     # Constantes de la représentation Lab
     class LabCte:  # TODO JB : utiliser an.Extent?
         min_L: int = 0
@@ -441,90 +436,58 @@ def view_classes(data, extent, border_coeffs=None):
 def view_classification_results(experiment_title, extent, original_data, colors_original, title_original,
                                 test1data, colors_test1, title_test1, test1errors=None, test2data=None,
                                 test2errors=None, colors_test2=None, title_test2=''):
-    cmap = cm.get_cmap('seismic')
-    n_dimensions = original_data.shape[1]
+    # Affiche les données originales en 3d
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
 
+    scatter1 = ax.scatter(original_data[:, 0], original_data[:, 1], original_data[:, 2], c=colors_original,
+                          marker='o')
+    ax.set_title(title_original)
+    class_names = {0: 'Coast', 1: 'Forest', 2: 'Street'}
+    color_map = {label: scatter1.cmap(scatter1.norm(label)) for label in np.unique(colors_original)}
+    legend_handles = [
+        plt.Line2D([], [], linestyle='', marker='o', markersize=10, label=class_names[label], color=color_map[label])
+        for label in color_map]
+    ax.legend(handles=legend_handles)
 
-    fig, (ax1, ax2,ax3) = plt.subplots(3, 1, figsize=(8, 8))
+    # Affiche les données de test 1 en 3d
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    scatter2 = ax.scatter(test1data[:, 0], test1data[:, 1], test1data[:, 2], c=colors_test1,
+                          marker='o')
+    ax.set_title(title_test1)
+    color_map = {label: scatter2.cmap(scatter2.norm(label)) for label in np.unique(colors_test1)}
+    legend_handles = [
+        plt.Line2D([], [], linestyle='', marker='o', markersize=10, label=class_names[label], color=color_map[label])
+        for label in color_map]
+    ax.legend(handles=legend_handles)
 
-    fig.suptitle(experiment_title)
+    # Affiche les erreurs de classification
+    if test1errors is not None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.scatter(test1data[test1errors, 0], test1data[test1errors, 1], test1data[test1errors, 2], c='r', marker='o')
+        ax.set_title('Erreurs de classification')
 
-    scatter1 = ax1.scatter(original_data[:, 0], original_data[:, 1], s=5, c=colors_original, cmap='viridis')
-    ax1.set_title(title_original)
-    ax1.set_xlabel(f'Dimension {0}')
-    ax1.set_ylabel(f'Dimension {1}')
-    ax1.legend(*scatter1.legend_elements(), title='Colors')
-
-    scatter2 = ax2.scatter(original_data[:, 2], original_data[:, 3], s=5, c=colors_original, cmap='viridis')
-    ax2.set_title(title_original)
-    ax2.set_xlabel(f'Dimension {2}')
-    ax2.set_ylabel(f'Dimension {3}')
-    ax2.legend(*scatter2.legend_elements(), title='Colors')
-
-    scatter3 = ax3.scatter(original_data[:, 4], original_data[:, 5], s=5, c=colors_original, cmap='viridis')
-    ax3.set_title(title_original)
-    ax3.set_xlabel(f'Dimension {4}')
-    ax3.set_ylabel(f'Dimension {5}')
-    ax3.legend(*scatter3.legend_elements(), title='Colors')
-    plt.tight_layout()
-    plt.show()
-    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(8, 8))
-
-    scatter1 = ax1.scatter(test1data[:, 0], test1data[:, 1], s=5, c=colors_test1, cmap='viridis')
-    ax1.set_title(title_test1)
-    ax1.set_xlabel(f'Dimension {0}')
-    ax1.set_ylabel(f'Dimension {1}')
-    ax1.legend(*scatter1.legend_elements(), title='Colors')
-
-    scatter2 = ax2.scatter(test1data[:, 2], test1data[:, 3], s=5, c=colors_test1, cmap='viridis')
-    ax2.set_title(title_test1)
-    ax2.set_xlabel(f'Dimension {2}')
-    ax2.set_ylabel(f'Dimension {3}')
-    ax2.legend(*scatter2.legend_elements(), title='Colors')
-
-    scatter3 = ax3.scatter(test1data[:, 4], test1data[:, 5], s=5, c=colors_test1, cmap='viridis')
-    ax3.set_title(title_test1)
-    ax3.set_xlabel(f'Dimension {4}')
-    ax3.set_ylabel(f'Dimension {5}')
-    ax3.legend(*scatter3.legend_elements(), title='Colors')
-    plt.tight_layout()
-    plt.show()
-    # Plot original data
-    # for d in range(n_dimensions - 1):  # Only plot the first two dimensions
-    #     ax1.scatter(original_data[:, d], original_data[:, d + 1], s=5, c=colors_original, cmap='viridis')
-    #     ax1.set_title(title_original)
-    #     ax1.set_xlabel(f'Dimension {d}')
-    #     ax1.set_ylabel(f'Dimension {d + 1}')
-    #
-    # # Plot test data 1
-    # for d in range(n_dimensions - 1):  # Only plot the first two dimensions
-    #     ax2.scatter(test1data[:, d], test1data[:, d + 1], s=5, c=colors_test1, cmap='viridis')
-    #     ax2.set_title(title_test1)
-    #     ax2.set_xlabel(f'Dimension {d}')
-    #     ax2.set_ylabel(f'Dimension {d + 1}')
-
+    # Affiche les données de test 2 en 3d
     if test2data is not None:
-        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(8, 8))
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        scatter3 = ax.scatter(test2data[:, 0], test2data[:, 1], test2data[:, 2], c=colors_test2,
+                              marker='o')
+        ax.set_title(title_test2)
+        color_map = {label: scatter3.cmap(scatter3.norm(label)) for label in np.unique(colors_test2)}
+        legend_handles = [
+            plt.Line2D([], [], linestyle='', marker='o', markersize=10, label=class_names[label * an.error_class * 0.75],
+                       color=color_map[label])
+            for label in color_map]
+        ax.legend(handles=legend_handles)
 
-        scatter1 = ax1.scatter(test2data[:, 0], test2data[:, 1], s=5, c=colors_test2, cmap='viridis')
-        ax1.set_title(title_test1)
-        ax1.set_xlabel(f'Dimension {0}')
-        ax1.set_ylabel(f'Dimension {1}')
-        ax1.legend(*scatter1.legend_elements(), title='Colors')
-
-        scatter2 = ax2.scatter(test2data[:, 2], test2data[:, 3], s=5, c=colors_test2, cmap='viridis')
-        ax2.set_title(title_test2)
-        ax2.set_xlabel(f'Dimension {2}')
-        ax2.set_ylabel(f'Dimension {3}')
-        ax2.legend(*scatter2.legend_elements(), title='Colors')
-
-        scatter3 = ax3.scatter(test2data[:, 4], test2data[:, 5], s=5, c=colors_test2, cmap='viridis')
-        ax3.set_title(title_test2)
-        ax3.set_xlabel(f'Dimension {4}')
-        ax3.set_ylabel(f'Dimension {5}')
-        ax3.legend(*scatter3.legend_elements(), title='Colors')
-        plt.tight_layout()
-        plt.show()
+    if test2errors is not None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.scatter(test2data[test2errors, 0], test2data[test2errors, 1], test2data[test2errors, 2], c='r', marker='o')
+        ax.set_title('Erreurs pour test 2')
 
 def equalizeHist(image, num_bins=256):
     image_hist, bins = np.histogram(image.flatten(), num_bins, density=True)
@@ -560,7 +523,7 @@ def viewEllipse(data, ax, scale=1, facecolor='none', edgecolor='red', **kwargs):
     height = 2 * np.sqrt(lambdas[1]) * scale
     angle = np.degrees(np.arctan2(*vectors[:, 0][::-1]))
 
-    ellipse = Ellipse((moy[0], moy[1]), width= width, height= height,
+    ellipse = Ellipse((moy[0], moy[1]), width=width, height=height,
                       angle=angle, facecolor=facecolor,
                       edgecolor=edgecolor, linewidth=2, **kwargs)
     return ax.add_patch(ellipse)

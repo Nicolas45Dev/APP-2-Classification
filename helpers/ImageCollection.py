@@ -64,20 +64,8 @@ class ImageCollection:
         self.images_forest = []
         self.images_street = []
 
-        self.coast_representation_mean = []
-        self.coast_representation_std = []
-        self.coast_representation_cov = []
-        self.coast_representation_eigen = []
-
-        self.forest_representation_mean = []
-        self.forest_representation_std = []
-        self.forest_representation_cov = []
-        self.forest_representation_eigen = []
-
-        self.street_representation_mean = []
-        self.street_representation_std = []
-        self.street_representation_cov = []
-        self.street_representation_eigen = []
+        self.max_lines = 0
+        self.max_vertical_lines = 0
 
 
         # Crée un array qui contient toutes les images
@@ -100,9 +88,9 @@ class ImageCollection:
                 self.images_street.append(self.images[i])
             else:
                 raise ValueError(i)
-        self.representation_coast = np.zeros((len(self.images_coast), 6))
-        self.representation_forest = np.zeros((len(self.images_forest), 6))
-        self.representation_street = np.zeros((len(self.images_street), 6))
+        self.representation_coast = np.zeros((len(self.images_coast), 3))
+        self.representation_forest = np.zeros((len(self.images_forest), 3))
+        self.representation_street = np.zeros((len(self.images_street), 3))
         self.image_types = [
             (self.images_coast, self.representation_coast),
             (self.images_forest, self.representation_forest),
@@ -170,8 +158,8 @@ class ImageCollection:
         return self.count_pixels_in_range(image, lower_gray, upper_gray)
 
     def greenPixelCount(self, image):
-        lower_green = np.array([42, 40, 40])  # Borne inférieure pour la teinte verte
-        upper_green = np.array([125, 255, 255])  # Borne supérieure pour la teinte verte
+        lower_green = np.array([42, 40, 40])
+        upper_green = np.array([120, 255, 255])
         return self.count_pixels_in_range(image, lower_green, upper_green)
 
     def redPixelCount(self, image):
@@ -209,15 +197,25 @@ class ImageCollection:
 
         for images, representation in self.image_types:
             for i in range(len(images)):
-                pixelGr, pixelRed, pixelGreen, pixelBlue = self.applyColorFilter(images[i])
-                angleMedian, angleIQR = self.applyEdgeFilter(images[i])
+                if i % 100 == 0:
+                    print(f"Processing image {i} of {len(images)}")
+                gray = self.applyColorFilter(images[i])
+                # hue_average = self.get_hue_average(images[i])
+                line_h, line_v = self.applyEdgeFilter(images[i])
 
-                representation[i][0] = pixelGr
-                representation[i][1] = pixelRed
-                representation[i][2] = pixelGreen
-                representation[i][3] = pixelBlue
-                representation[i][4] = angleMedian
-                representation[i][5] = angleIQR
+                representation[i][0] = gray
+                representation[i][1] = line_h
+                representation[i][2] = line_v
+                # representation[i][3] = ikea
+
+        # Normalisation des représentations pour les lignes
+        self.representation_coast[:, 1] = self.representation_coast[:, 1] / self.max_lines
+        self.representation_forest[:, 1] = self.representation_forest[:, 1] / self.max_lines
+        self.representation_street[:, 1] = self.representation_street[:, 1] / self.max_lines
+
+        self.representation_coast[:, 2] = self.representation_coast[:, 2] / self.max_vertical_lines
+        self.representation_forest[:, 2] = self.representation_forest[:, 2] / self.max_vertical_lines
+        self.representation_street[:, 2] = self.representation_street[:, 2] / self.max_vertical_lines
 
         print("Processing done")
 
@@ -226,11 +224,11 @@ class ImageCollection:
         imHSV = skic.rgb2hsv(image)
         imHSV = np.round(imHSV * (256 - 1))
         pixel_pourcentage_gray = self.grayPixelCount(imHSV)
-        pixel_pourcentage_green = self.greenPixelCount(imHSV)
-        pixel_pourcentage_blue = self.bluePixelCount(imHSV)
-        pixel_pourcentage_red = self.redPixelCount(imHSV)
+        # pixel_pourcentage_green = self.greenPixelCount(imHSV)
+        # pixel_pourcentage_blue = self.bluePixelCount(imHSV)
+        # pixel_pourcentage_red = self.redPixelCount(imHSV)
 
-        return pixel_pourcentage_gray, pixel_pourcentage_red, pixel_pourcentage_green, pixel_pourcentage_blue
+        return pixel_pourcentage_gray
 
     def images_display(self, indexes):
         """
@@ -251,48 +249,6 @@ class ImageCollection:
                 im = skiio.imread(self.image_folder + os.sep + self.image_list[indexes[i]])
             ax2[i].imshow(im)
 
-    def do_pca_coast(self, representation):
-        # Compute average and std of all representation
-        # Then compute eighenvalues and eigenvectors
-        self.coast_representation_mean = (np.mean(representation, axis=0))
-        self.coast_representation_std = (np.std(representation, axis=0))
-        self.coast_representation_cov = (np.cov(representation, rowvar=False))
-        self.coast_representation_eigen = (np.linalg.eig(self.coast_representation_cov))
-
-    def do_pca_forest(self, representation):
-        # Compute average and std of all representation
-        # Then compute eighenvalues and eigenvectors
-        self.forest_representation_mean = (np.mean(representation, axis=0))
-        self.forest_representation_std = (np.std(representation, axis=0))
-        self.forest_representation_cov = (np.cov(representation, rowvar=False))
-        self.forest_representation_eigen = (np.linalg.eig(self.forest_representation_cov))
-
-    def do_pca_street(self, representation):
-        # Compute average and std of all representation
-        # Then compute eighenvalues and eigenvectors
-        self.street_representation_mean = (np.mean(representation, axis=0))
-        self.street_representation_std = (np.std(representation, axis=0))
-        self.street_representation_cov = (np.cov(representation, rowvar=False))
-        self.street_representation_eigen = (np.linalg.eig(self.street_representation_cov))
-
-
-    def equalizeHistogram(self, indexes):
-        if type(indexes) == int:
-            indexes = [indexes]
-
-        fig3 = plt.figure()
-        ax3 = fig3.subplots(len(indexes), 2)
-        for i in range(len(indexes)):
-            if self.all_images_loaded:
-                im = self.images[indexes[i]]
-            else:
-                im = skiio.imread(self.image_folder + os.sep + self.image_list[indexes[i]])
-            ax3[i, 0].imshow(im)
-            image_equalized, _ = an.equalizeHist(im)
-            ax3[i, 1].imshow(image_equalized)
-            # im = rgb2gray(image_equalized)
-            ax3[i, 2].imshow(im, cmap='gray')
-
     def gaussian_kernel(self, sigma):
         size = int(3 * sigma) * 2 + 1
         kernel_radius = size // 2
@@ -302,80 +258,74 @@ class ImageCollection:
 
     def gaussian_blur(self, image_array, sigma=1):
         kernel = self.gaussian_kernel(sigma)
-        blurred_image = convolve2d(image_array, kernel[:, np.newaxis] * kernel[np.newaxis, :], mode='same',
-                                   boundary='wrap')
+        blurred_image = convolve2d(image_array, kernel[:, np.newaxis] * kernel[np.newaxis, :], mode='same', boundary='wrap')
         return blurred_image
 
-    # Effectuer un filtre de laplace sur une image
-    # Permet de détecter les contours
-    def laplace_operator(self, image_array):
+    def sobel_edge_detection(self, image_array):
         # Normaliser les valeurs de l'image résultante à [0, 255]
         norm_image = (image_array - np.min(image_array)) / (
                 np.max(image_array) - np.min(image_array)) * 255
-        # Définir le noyau de l'opérateur de Laplace
-        laplace_kernel = np.array([[0, 1, 0],
-                                   [1, -4, 1],
-                                   [0, 1, 0]])
-        filtered_image = convolve2d(norm_image, laplace_kernel, mode='same', boundary='symm')
-        #normalisez la réponse laplace
-        filtered_image = (filtered_image - np.min(filtered_image)) / (
-                np.max(filtered_image) - np.min(filtered_image)) * 255
-        return filtered_image
+        # Définir les noyaux de Sobel
+        sobel_x = np.array([[-1, 0, 1],
+                            [-2, 0, 2],
+                            [-1, 0, 1]])
+        sobel_y = np.array([[-1, -2, -1],
+                            [0, 0, 0],
+                            [1, 2, 1]])
+        # Appliquer les filtres de Sobel
+        gradient_x = convolve2d(norm_image, sobel_x, mode='same', boundary='symm')
+        gradient_y = convolve2d(norm_image, sobel_y, mode='same', boundary='symm')
+        # Calculer la magnitude du gradient
+        gradient_magnitude = np.sqrt(gradient_x ** 2 + gradient_y ** 2)
+        # Normaliser les valeurs de la magnitude du gradient à [0, 255]
+        gradient_magnitude = (gradient_magnitude - np.min(gradient_magnitude)) / (
+                np.max(gradient_magnitude) - np.min(gradient_magnitude)) * 255
+        return gradient_magnitude
+
     def applyEdgeFilter(self, image):
-        # ax5[i, 0].imshow(im)
         image_equalized, _ = an.equalizeHist(image)
-        # change image_equalized to uint8
-        # ax5[i, 1].imshow(image_equalized)
+
         # convert to grayscale
         grayImage = rgb2gray(image_equalized)
-        # ax5[i, 2].imshow(im, cmap='gray')
-        filter_results = self.gaussian_blur(grayImage, sigma=4)
-        filter_results = self.laplace_operator(filter_results)
-        # ax5[i, 3].imshow(filter_results, cmap='gray')
-        # Trouver les lignes prevalentes
-        return self.find_lines(filter_results)
+        filter_results = self.gaussian_blur(grayImage, sigma=3)
 
+        # Show the result of the gaussian blur
+        sobel = self.sobel_edge_detection(filter_results)
+
+        # Trouver les lignes prevalentes
+        return self.find_lines(sobel)
 
     def find_lines(self, image_laplace):
+
         # Appliquer la détection de contours de Canny sur l'image de Laplace
         edges = canny(image_laplace, sigma=1.5, low_threshold=0.2, high_threshold=5)
         # Trouver les pics dans la transformée de Hough
         lines = probabilistic_hough_line(edges, threshold=4, line_length=12, line_gap=3)
+
         # defined array
-        angleArray = []
         lineArray = []
+        horixontal_line = []
+        vertical_line = []
         # Extraire et plot les lignes
         for line in lines:
             p0, p1 = line
             lineArray.append((p0, p1))
             angle_rad = np.arctan2(p1[1] - p0[1], p1[0] - p0[0])
-            angleArray.append(np.degrees(angle_rad) % 360)
+            angle = np.degrees(angle_rad) % 360
+            # Si l'angle se trouve entre 15 et 345 degrés, on considère la ligne comme horizontale
+            if (5 > angle or angle > 355) or (175 > angle > 185):
+                horixontal_line.append(line)
+            # Si l'angle se trouve entre 80 et 100 degrés ou 260 et 280 degrées, on considère la ligne comme verticale
+            elif (85 < angle < 95) or (265 < angle < 275):
+                vertical_line.append(line)
 
-        angleMedian = np.median(angleArray)
-        angleIQR = np.percentile(angleArray, 75) - np.percentile(angleArray, 25)
-        # Normalisation des angles entre 0 et 1
-        angleMedian = angleMedian / 360
-        angleIQR = angleIQR / 360
-        return angleMedian, angleIQR
+        if len(lineArray) > self.max_lines:
+            self.max_lines = len(lineArray)
 
-    def applyFilterUnsharp(self, indexes):
-        if type(indexes) == int:
-            indexes = [indexes]
+        if len(vertical_line) > self.max_vertical_lines:
+            self.max_vertical_lines = len(vertical_line)
 
-        fig4 = plt.figure()
-        ax4 = fig4.subplots(len(indexes), 3)
-        for i in range(len(indexes)):
-            if self.all_images_loaded:
-                im = self.images[indexes[i]]
-            else:
-                im = skiio.imread(self.image_folder + os.sep + self.image_list[indexes[i]])
-            ax4[i, 0].imshow(im)
-            # convert to grayscale
-            im = rgb2gray(im)
-            ax4[i, 1].imshow(im, cmap='gray')
-            filter_results = filters.unsharp_mask(im, radius=5, amount=2.0)
-            ax4[i, 2].imshow(filter_results)
-
+        return len(lineArray) - (len(horixontal_line) + len(vertical_line)), len(vertical_line)
 
     def generateAllHistograms(self, indexes):
         if type(indexes) == int:

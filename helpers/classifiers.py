@@ -78,6 +78,7 @@ class GaussianProbDensity:
     Train intégré dans le constructeur
     Predict à part -> computeProbaility
     """
+
     def __init__(self, data2train):
         _, self.representationDimensions = np.asarray(data2train).shape
         self.mean, self.cov, _, _ = an.calcModeleGaussien(data2train)
@@ -91,7 +92,8 @@ class GaussianProbDensity:
         # calcule la distance de mahalanobis
         # itère sur l'ensemble des éléments à tester
         temp = np.array([testdata1array[j] - self.mean for j in range(testDataNSamples)])
-        mahalanobis = np.array([np.matmul(np.matmul(temp[j], self.inv_cov), temp[j].T) for j in range(testDataNSamples)])
+        mahalanobis = np.array(
+            [np.matmul(np.matmul(temp[j], self.inv_cov), temp[j].T) for j in range(testDataNSamples)])
         return 1 / np.sqrt(self.det * (2 * np.pi) ** self.representationDimensions) * np.exp(-mahalanobis / 2)
 
 
@@ -103,6 +105,7 @@ class histProbDensity:
     Train intégré dans le constructeur
     Predict à part -> computeProbaility
     """
+
     def __init__(self, data2train, title='', view=False):
         _, self.representationDimensions = np.asarray(data2train).shape
         self.extent = data2train.extent
@@ -126,6 +129,7 @@ class BayesClassifier:
     Train() est intégré dans le constructeur, i.e. le constructeur calcule les modèles directement
     Predict est incomplet (ne tient pas compte du coût et des a priori
     """
+
     def __init__(self, data2trainLists, probabilitydensityType=GaussianProbDensity, apriori=None, costs=None):
         """
         data2trainLists: correspond au format de listes de ClassificationData()
@@ -165,8 +169,13 @@ class BayesClassifier:
         # reshape pour que les lignes soient les calculs pour 1 point original
         classProbDensities = np.array(classProbDensities).T
 
-        # calcul de la prédiction en tenant compte de l'apriori et du coût
-        predictions = np.argmax(classProbDensities, axis=1).reshape(testDataNSamples, 1)
+        classProbWithCost = np.dot(classProbDensities, self.costs)
+
+        predictions = np.argmax(classProbWithCost, axis=1)
+        predictions = predictions.reshape(testDataNSamples, 1)
+
+        # appliqué la matrice cost sur les predictions
+
 
         if np.asarray(expected_labels1array).any():
             errors_indexes = an.calc_erreur_classification(expected_labels1array, predictions, gen_output)
@@ -183,25 +192,26 @@ class BayesClassify_APP2:
         """
         Wrapper avec tous les nice to have pour un classificateur bayésien
         """
-        print('\n\n=========================\nNouveau classificateur: '+experiment_title)
+        print('\n\n=========================\nNouveau classificateur: ' + experiment_title)
         self.classifier = BayesClassifier(data2train.dataLists, probabilitydensityType, apriori=apriori, costs=costs)
         self.donneesTestRandom = an.genDonneesTest(ndonnees_random, data2train.extent)
         self.predictRandom, _ = self.classifier.predict(self.donneesTestRandom)  # classifie les données de test1
-        if np.asarray(data2test).any():   # classifie les données de test2 si présentes
-            self.predictTest, self.error_indexes = self.classifier.predict(data2test.data1array, data2test.labels1array, gen_output=gen_output)
+        if np.asarray(data2test).any():  # classifie les données de test2 si présentes
+            self.predictTest, self.error_indexes = self.classifier.predict(data2test.data1array, data2test.labels1array,
+                                                                           gen_output=gen_output)
         else:
             self.predictTest = []
             self.error_indexes = []
         if view:
             an.view_classification_results(original_data=data2train.data1array, test1data=self.donneesTestRandom,
-                                       test2data=data2test.data1array, test2errors=self.error_indexes,
-                                       colors_original=data2train.labels1array, colors_test1=self.predictRandom,
-                                       colors_test2=self.predictTest / an.error_class / 0.75,
-                                       experiment_title=f'Classification de Bayes, {experiment_title}',
-                                       title_original='Données originales',
-                                       title_test1=f'Données aléatoires classées',
-                                       title_test2='Données d\'origine reclassées',
-                                       extent=data2train.extent)
+                                           test2data=data2test.data1array, test2errors=self.error_indexes,
+                                           colors_original=data2train.labels1array, colors_test1=self.predictRandom,
+                                           colors_test2=self.predictTest / an.error_class / 0.75,
+                                           experiment_title=f'Classification de Bayes, {experiment_title}',
+                                           title_original='Données originales',
+                                           title_test1=f'Données aléatoires classées',
+                                           title_test2='Données d\'origine reclassées',
+                                           extent=data2train.extent)
 
 
 class PPVClassifier:
@@ -240,32 +250,35 @@ class PPVClassify_APP2:
     def __init__(self, data2train, data2test=None, n_neighbors=1, metric='minkowski', ndonnees_random=5000,
                  useKmean=False, n_representants=1,
                  experiment_title='PPV Classifier', gen_output=False, view=False):
-        print('\n\n=========================\nNouveau classificateur: '+experiment_title)
+        print('\n\n=========================\nNouveau classificateur: ' + experiment_title)
+
         self.classifier = PPVClassifier(data2train, n_neighbors=n_neighbors, metric=metric,
-                                        useKmean=useKmean, n_represantants=n_representants, experiment_title=experiment_title,
+                                        useKmean=useKmean, n_represantants=n_representants,
+                                        experiment_title=experiment_title,
                                         view=True)
         self.donneesTestRandom = an.genDonneesTest(ndonnees_random, data2train.extent)
         self.predictRandom, _ = self.classifier.predict(self.donneesTestRandom)  # classifie les données de test
-        if np.asarray(data2test).any():   # classifie les données de test2 si présentes
+        if np.asarray(data2test).any():  # classifie les données de test2 si présentes
             self.predictTest, self.error_indexes = \
                 self.classifier.predict(data2test.data1array, data2test.labels1array, gen_output=gen_output)
         else:
             self.predictTest = []
             self.error_indexes = []
+
         if view:
             an.view_classification_results(original_data=data2train.data1array, test1data=self.donneesTestRandom,
-                                       test2data=data2test.data1array
-                                            if np.asarray(data2test).any() else None,
-                                       test2errors=self.error_indexes,
-                                       colors_original=data2train.labels1array, colors_test1=self.predictRandom,
-                                       colors_test2=self.predictTest / an.error_class / 0.75
-                                            if np.asarray(data2test).any() else None,
-                                       experiment_title=experiment_title,
-                                       title_original='Représentants de classe',
-                                       title_test1=f'Données aléatoires classées {n_neighbors}-PPV',
-                                       title_test2=f'Prédiction de {n_neighbors}-PPV, données originales'
-                                            if np.asarray(data2test).any() else None,
-                                       extent=data2train.extent)
+                                           test2data=data2test.data1array
+                                           if np.asarray(data2test).any() else None,
+                                           test2errors=self.error_indexes,
+                                           colors_original=data2train.labels1array, colors_test1=self.predictRandom,
+                                           colors_test2=self.predictTest / an.error_class / 0.75
+                                           if np.asarray(data2test).any() else None,
+                                           experiment_title=experiment_title,
+                                           title_original='Représentants de classe',
+                                           title_test1=f'Données aléatoires classées {n_neighbors}-PPV',
+                                           title_test2=f'Prédiction de {n_neighbors}-PPV, données originales'
+                                           if np.asarray(data2test).any() else None,
+                                           extent=data2train.extent)
 
 
 class KMeanAlgo:
@@ -274,6 +287,7 @@ class KMeanAlgo:
     Accepte un objet ClassificationData en entrée
     Produit une liste unique des représentants de classe et de leur étiquette
     """
+
     def __init__(self, data2train, n_representants=1):
         self.n_classes, _, _ = np.asarray(data2train.dataLists).shape
         self.kmeans_on_each_class = []
@@ -301,8 +315,10 @@ class Clusterer_APP2:
         self.n_classes, _, _ = np.asarray(data2train.dataLists).shape
         self.clusterer = clusterer(data2train, n_representants=n_representants)
         if view:
-            an.view_classification_results(original_data=data2train.data1array, test1data=self.clusterer.cluster_centers,
-                                           colors_original=data2train.labels1array, colors_test1=self.clusterer.cluster_labels,
+            an.view_classification_results(original_data=data2train.data1array,
+                                           test1data=self.clusterer.cluster_centers,
+                                           colors_original=data2train.labels1array,
+                                           colors_test1=self.clusterer.cluster_labels,
                                            experiment_title=experiment_title,
                                            title_original='Données d\'origine',
                                            title_test1=f'Clustering de {n_representants}-Means',
@@ -381,7 +397,8 @@ class NNClassifier:
             self.NNmodel = Sequential()
             self.state = self.state and not NNClassifier.NNstate.trained
             self.state = self.state and not NNClassifier.NNstate.architecture
-        self.NNmodel.add(Dense(units=n_neurons, activation=innerActivation, input_shape=(self.traindata1array.shape[-1],)))
+        self.NNmodel.add(
+            Dense(units=n_neurons, activation=innerActivation, input_shape=(self.traindata1array.shape[-1],)))
         for i in range(2, n_hidden_layers):
             self.NNmodel.add(Dense(units=n_neurons, activation=innerActivation))
         self.NNmodel.add(Dense(units=self.trainlabels1array.shape[-1], activation=outputActivation))
@@ -397,13 +414,13 @@ class NNClassifier:
         if batch_size is None:
             batch_size = len(self.traindata1array)
         self.NNmodel.fit(self.traindata1array, self.trainlabels1array, batch_size=batch_size, verbose=0,
-                    epochs=n_epochs, shuffle=True, callbacks=callback_list,
-                    validation_data=(self.validdata1array, self.validlabels1array))
+                         epochs=n_epochs, shuffle=True, callbacks=callback_list,
+                         validation_data=(self.validdata1array, self.validlabels1array))
 
         # Save trained model to disk
         if savename:
-            self.NNmodel.save('saves'+os.sep+savename+'.keras')
-            pickle.dump([self.minmax, self.NNmodel.history], open('saves'+os.sep+savename+'.pkl','wb'))
+            self.NNmodel.save('saves' + os.sep + savename + '.keras')
+            pickle.dump([self.minmax, self.NNmodel.history], open('saves' + os.sep + savename + '.pkl', 'wb'))
         if view:
             an.plot_metrics(self.NNmodel)
 
@@ -413,10 +430,10 @@ class NNClassifier:
         # Ce mécanisme permet de recharger un modèle déjà entraîné du disque et d'utiliser predict direct
         # sans passer par le reste de la logique d'initialisation
         if savename:
-            self.NNmodel = self.NNmodel.load('saves'+os.sep+savename+'.keras')
+            self.NNmodel = self.NNmodel.load('saves' + os.sep + savename + '.keras')
             self.inputDimensions = self.NNmodel.input_shape[1]
             self.outputDimensions = self.NNmodel.output_shape[1]
-            self.minmax, self.NNmodel.history = pickle.load(open('saves'+os.sep+savename+'.pkl', 'rb'))
+            self.minmax, self.NNmodel.history = pickle.load(open('saves' + os.sep + savename + '.pkl', 'rb'))
             self.state = NNClassifier.NNstate.architecture
             if self.NNmodel.history:
                 self.state = self.state | NNClassifier.NNstate.trained
@@ -451,26 +468,30 @@ class NNClassify_APP2:
                  optimizer=Adam(), loss='binary_crossentropy', metrics=None,
                  callback_list=None, n_epochs=1000, savename='', ndonnees_random=5000, train=0.8,
                  experiment_title='NN Classifier', gen_output=False, view=False):
-
-        print('\n\n=========================\nNouveau classificateur: '+experiment_title)
+        print('\n\n=========================\nNouveau classificateur: ' + experiment_title)
         self.classifier = NNClassifier()
-        self.classifier.preprocess_training_data(dataLists=data2train.dataLists, labelsLists=data2train.labelsLists,train_fraction=train)
+        self.classifier.preprocess_training_data(dataLists=data2train.dataLists, labelsLists=data2train.labelsLists,
+                                                 train_fraction=train)
         self.classifier.init_model(n_neurons, n_layers, innerActivation=innerActivation,
                                    outputActivation=outputActivation, gen_output=gen_output,
                                    optimizer=optimizer, loss=loss, metrics=metrics)
         self.classifier.train_model(n_epochs, callback_list=callback_list, savename=savename, view=view)
         self.donneesTestRandom = an.genDonneesTest(ndonnees_random, data2train.extent)
         self.predictRandom, _ = self.classifier.predict(testdata1array=self.donneesTestRandom)
-        self.predictTest, self.error_indexes = self.classifier.predict(testdata1array=data2test["data"],
-                                                                       expected_labels1array=data2test["label"],
+        self.predictTest, self.error_indexes = self.classifier.predict(testdata1array=data2test.data1array,
+                                                                       expected_labels1array=data2test.labels1array,
                                                                        gen_output=gen_output)
         if view:
-            an.view_classification_results(original_data=data2train.data1array, test1data=data2test["data"],
-                                           test2errors=self.error_indexes,
-                                           colors_original=data2train.labels1array, colors_test1=self.predictTest / an.error_class / 0.75,
-                                           experiment_title=experiment_title+f'NN {n_layers} layer(s) caché(s), {n_neurons} neurones par couche',
+            an.view_classification_results(original_data=data2train.data1array, colors_original=data2train.labels1array,
+                                           test2data=data2test.data1array,
+                                           colors_test2=self.predictTest / an.error_class / 0.75,
+                                           test1errors=self.error_indexes,
+                                           test1data=self.donneesTestRandom,
+                                           colors_test1=self.predictRandom,
+                                           experiment_title=experiment_title + f'NN {n_layers} layer(s) caché(s), {n_neurons} neurones par couche',
                                            title_original='Données originales',
-                                           title_test1='Prédiction du RNA, données originales', extent=data2train.extent)
+                                           title_test2='Données d\'origine reclassées',
+                                           title_test1='Données aléatoires classifiés', extent=data2train.extent)
 
 
 def get_gaussian_borders(dataLists):
@@ -519,8 +540,10 @@ def get_gaussian_borders(dataLists):
         a = np.array(inv_cov_list[classePair[1]] - inv_cov_list[classePair[0]])
         b = -np.array([2 * (np.dot(inv_cov_list[classePair[1]], avg_list[classePair[1]]) -
                             np.dot(inv_cov_list[classePair[0]], avg_list[classePair[0]]))])
-        d = -(np.dot(np.dot(avg_list[classePair[0]], inv_cov_list[classePair[0]]), np.transpose(avg_list[classePair[0]])) -
-              np.dot(np.dot(avg_list[classePair[1]], inv_cov_list[classePair[1]]), np.transpose(avg_list[classePair[1]])))
+        d = -(np.dot(np.dot(avg_list[classePair[0]], inv_cov_list[classePair[0]]),
+                     np.transpose(avg_list[classePair[0]])) -
+              np.dot(np.dot(avg_list[classePair[1]], inv_cov_list[classePair[1]]),
+                     np.transpose(avg_list[classePair[1]])))
         c = -np.log(det_list[classePair[1]] / det_list[classePair[0]])
 
         # rappel: coef order: [x**2, xy, y**2, x, y, cst (cote droit log de l'equation de risque), cst (dans les distances de mahalanobis)]
@@ -534,6 +557,7 @@ class print_every_N_epochs(K.callbacks.Callback):
     """
     Helper callback pour remplacer l'affichage lors de l'entraînement
     """
+
     def __init__(self, N_epochs):
         super().__init__()
         self.epochs = N_epochs
@@ -544,4 +568,4 @@ class print_every_N_epochs(K.callbacks.Callback):
             print("Epoch: {:>3} | Loss: ".format(epoch) +
                   f"{logs['loss']:.4e}" + " | Valid loss: " + f"{logs['val_loss']:.4e}" +
                   (f" | Accuracy: {logs['accuracy']:.4e}" + " | Valid accuracy " + f"{logs['val_accuracy']:.4e}"
-                   if 'accuracy' in logs else "") )
+                   if 'accuracy' in logs else ""))
